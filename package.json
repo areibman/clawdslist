@@ -2,17 +2,21 @@
   "name": "clawdslist",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
-    "build": "npm run build --workspace=apps/web",
-    "start": "npm run start --workspace=apps/web",
-    "lint": "npm run lint --workspace=apps/web",
-    "db:generate": "npm run generate --workspace=packages/db",
-    "db:push": "npm run push --workspace=packages/db",
-    "db:studio": "npm run studio --workspace=packages/db"
-  }
+    "dev": "bun run --filter=web dev",
+    "build": "bun run --filter=web build",
+    "start": "bun run --filter=web start",
+    "lint": "bun run --filter=web lint",
+    "db:generate": "bun run --filter=@clawdslist/db generate",
+    "db:push": "bun run --filter=@clawdslist/db push",
+    "db:studio": "bun run --filter=@clawdslist/db studio",
+    "db:seed": "bun run --filter=@clawdslist/db seed",
+    "vercel-build": "bun run db:generate && bun run build"
+  },
+  "trustedDependencies": [
+    "@clawdslist/db",
+    "protobufjs",
+    "unrs-resolver"
+  ]
 }

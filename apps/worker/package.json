@@ -4,17 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "npx trigger.dev@latest dev",
-    "deploy": "npx trigger.dev@latest deploy"
+    "dev": "bunx trigger.dev@latest dev",
+    "deploy": "bunx trigger.dev@latest deploy"
   },
   "dependencies": {
-    "@clawdslist/db": "*",
-    "@clawdslist/shared": "*",
-    "@mendable/firecrawl-js": "^4.12.0",
-    "@trigger.dev/sdk": "^3.0.0"
+    "@clawdslist/db": "workspace:*",
+    "@clawdslist/shared": "workspace:*",
+    "@mendable/firecrawl-js": "latest",
+    "@trigger.dev/sdk": "latest"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "latest",
+    "typescript": "latest"
   }
 }
