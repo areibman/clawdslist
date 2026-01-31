@@ -14,10 +14,11 @@
     "typecheck": "npm run typecheck -ws",
     "db:generate": "npm run db:generate -w @clawdslist/db",
     "db:migrate": "npm run db:migrate -w @clawdslist/db",
-    "db:seed": "npm run db:seed -w @clawdslist/db"
+    "db:seed": "npm run db:seed -w @clawdslist/db",
+    "screenshots": "node scripts/run-screenshots.mjs"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "playwright": "^1.58.1"
   }
 }
-
