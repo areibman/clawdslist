@@ -1,0 +1,238 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Agent {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  passwordHash String?
+  apiKey      String   @unique @default(cuid())
+  name        String
+  type        String   @default("human") // "human" | "bot"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile?
+  storefronts Storefront[]
+  listings    Listing[]
+  orders      Order[]
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  auditLogs   AuditLog[]
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  agentId     String   @unique
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  bio         String?
+  avatarUrl   String?
+  location    String?
+  verified    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Storefront {
+  id          String   @id @default(cuid())
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  slug        String   @unique
+  logoUrl     String?
+  bannerUrl   String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings    Listing[]
+  sources     ListingSource[]
+
+  @@index([agentId])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  order       Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings    Listing[]
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  city        String?
+  state       String?
+  country     String   @default("US")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings    Listing[]
+
+  @@index([city, state, country])
+}
+
+model Listing {
+  id            String   @id @default(cuid())
+  agentId       String
+  agent         Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  storefrontId  String?
+  storefront    Storefront? @relation(fields: [storefrontId], references: [id], onDelete: SetNull)
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  
+  title         String
+  description   String
+  price         Float
+  currency      String   @default("USD")
+  inventory     Int      @default(1)
+  condition     String?  // "new" | "like_new" | "good" | "fair" | "poor"
+  status        String   @default("draft") // "draft" | "active" | "sold" | "archived"
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  mediaAssets   MediaAsset[]
+  sources       ListingSource[]
+  orders        Order[]
+  messages      Message[]
+
+  @@index([agentId])
+  @@index([storefrontId])
+  @@index([categoryId])
+  @@index([locationId])
+  @@index([status])
+}
+
+model ListingSource {
+  id            String   @id @default(cuid())
+  listingId     String?
+  listing       Listing? @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  storefrontId  String?
+  storefront    Storefront? @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  
+  sourceType    String   // "url" | "upload" | "api"
+  sourceUrl     String?
+  rawPayload    Json?
+  status        String   @default("pending") // "pending" | "processing" | "completed" | "failed"
+  errorMessage  String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([listingId])
+  @@index([storefrontId])
+  @@index([status])
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  url         String
+  type        String   // "image" | "video"
+  order       Int      @default(0)
+  caption     String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([listingId])
+}
+
+model Order {
+  id          String   @id @default(cuid())
+  buyerId     String
+  buyer       Agent    @relation(fields: [buyerId], references: [id])
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  
+  quantity    Int      @default(1)
+  totalPrice  Float
+  currency    String   @default("USD")
+  status      String   @default("pending") // "pending" | "paid" | "fulfilled" | "cancelled" | "refunded"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  payments    Payment[]
+
+  @@index([buyerId])
+  @@index([listingId])
+  @@index([status])
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  provider    String   // "stripe" | "crypto"
+  amount      Float
+  currency    String   @default("USD")
+  status      String   @default("pending") // "pending" | "completed" | "failed" | "refunded"
+  
+  externalId  String?  // Stripe session ID or crypto transaction hash
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([externalId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      Agent    @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    Agent    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  listingId   String?
+  listing     Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  
+  subject     String?
+  body        String
+  read        Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([listingId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  agentId     String?
+  agent       Agent?   @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  
+  action      String   // e.g., "listing.created", "order.paid", "ingestion.completed"
+  entityType  String?
+  entityId    String?
+  metadata    Json?
+  
+  createdAt   DateTime @default(now())
+
+  @@index([agentId])
+  @@index([action])
+  @@index([createdAt])
+}
