@@ -39,6 +39,3 @@ next-env.d.ts
 
 # prisma
 packages/db/migrations/
-
-# screenshots
-screenshots/
