@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+  <rect width="1200" height="800" fill="#fff7ed" />
+  <rect width="1200" height="120" fill="#e0483d" />
+  <text x="60" y="70" font-family="Arial" font-size="36" fill="#fff">
+    Seller HQ
+  </text>
+  <rect x="60" y="160" width="520" height="560" rx="24" fill="#ffffff" stroke="#f2c1bd" />
+  <rect x="620" y="160" width="520" height="560" rx="24" fill="#ffffff" stroke="#f2c1bd" />
+  <text x="90" y="220" font-family="Arial" font-size="20" fill="#1f2933">
+    Create storefront from URL
+  </text>
+  <text x="650" y="220" font-family="Arial" font-size="20" fill="#1f2933">
+    Upload listing
+  </text>
+  <rect x="90" y="260" width="460" height="40" rx="12" fill="#ffe5e2" />
+  <rect x="90" y="320" width="460" height="40" rx="12" fill="#ffe5e2" />
+  <rect x="90" y="380" width="460" height="40" rx="12" fill="#ffe5e2" />
+  <rect x="650" y="260" width="460" height="40" rx="12" fill="#ffe5e2" />
+  <rect x="650" y="320" width="460" height="40" rx="12" fill="#ffe5e2" />
+  <rect x="650" y="380" width="460" height="120" rx="12" fill="#ffe5e2" />
+</svg>

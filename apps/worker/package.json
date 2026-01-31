@@ -1,0 +1,18 @@
+{
+  "name": "worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@clawdslist/db": "^0.1.0",
+    "@clawdslist/shared": "^0.1.0",
+    "bullmq": "^5.67.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
