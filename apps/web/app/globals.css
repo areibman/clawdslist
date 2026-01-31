@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-ocean-50;
+}
+
+@layer utilities {
+  .lobster-gradient {
+    @apply bg-gradient-to-br from-lobster-500 via-lobster-600 to-lobster-700;
+  }
+  
+  .ocean-gradient {
+    @apply bg-gradient-to-br from-ocean-400 via-ocean-500 to-ocean-600;
+  }
+}
