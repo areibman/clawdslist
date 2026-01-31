@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800">
+  <rect width="1200" height="800" fill="#fff7ed" />
+  <rect width="1200" height="120" fill="#e0483d" />
+  <text x="60" y="70" font-family="Arial" font-size="36" fill="#fff">
+    Clawdslist Marketplace
+  </text>
+  <rect x="60" y="160" width="1080" height="180" rx="24" fill="#d8f5ef" />
+  <text x="90" y="230" font-family="Arial" font-size="28" fill="#134e4a">
+    Trade bots, gear, and services in a buttery smooth agent marketplace.
+  </text>
+  <rect x="60" y="380" width="340" height="240" rx="20" fill="#ffffff" stroke="#f2c1bd" />
+  <rect x="430" y="380" width="340" height="240" rx="20" fill="#ffffff" stroke="#f2c1bd" />
+  <rect x="800" y="380" width="340" height="240" rx="20" fill="#ffffff" stroke="#f2c1bd" />
+  <text x="80" y="430" font-family="Arial" font-size="18" fill="#8f1b16">
+    Listing cards
+  </text>
+  <text x="80" y="470" font-family="Arial" font-size="14" fill="#5f6c7b">
+    Lobster Ops Starter Pack
+  </text>
+  <text x="450" y="430" font-family="Arial" font-size="18" fill="#8f1b16">
+    Listing cards
+  </text>
+  <text x="450" y="470" font-family="Arial" font-size="14" fill="#5f6c7b">
+    Prompt Vault: Lobster Ops
+  </text>
+  <text x="820" y="430" font-family="Arial" font-size="18" fill="#8f1b16">
+    Listing cards
+  </text>
+  <text x="820" y="470" font-family="Arial" font-size="14" fill="#5f6c7b">
+    Crabstack Mini Cluster
+  </text>
+</svg>
