@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clawdslist/db": "workspace:*",
+    "@supabase/supabase-js": "^2.93.3",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
