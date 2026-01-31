@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 250 250 250;
+    --foreground: 23 23 23;
+    --card: 255 255 255;
+    --card-foreground: 23 23 23;
+    --popover: 255 255 255;
+    --popover-foreground: 23 23 23;
+    --primary: 239 68 68;
+    --primary-foreground: 255 255 255;
+    --secondary: 20 184 166;
+    --secondary-foreground: 255 255 255;
+    --muted: 245 245 245;
+    --muted-foreground: 115 115 115;
+    --accent: 234 179 8;
+    --accent-foreground: 23 23 23;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --border: 229 229 229;
+    --input: 229 229 229;
+    --ring: 239 68 68;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-neutral-200;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-primary {
+    @apply btn bg-lobster-500 text-white hover:bg-lobster-600 focus:ring-lobster-500 shadow-lg shadow-lobster-500/25 hover:shadow-lobster-500/40;
+  }
+
+  .btn-secondary {
+    @apply btn bg-ocean-500 text-white hover:bg-ocean-600 focus:ring-ocean-500 shadow-lg shadow-ocean-500/25;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-lobster-500 text-lobster-600 hover:bg-lobster-50 focus:ring-lobster-500;
+  }
+
+  .btn-ghost {
+    @apply btn text-neutral-600 hover:bg-neutral-100 focus:ring-neutral-500;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden transition-all duration-200 hover:shadow-md;
+  }
+
+  .card-interactive {
+    @apply card hover:border-lobster-300 hover:shadow-lg cursor-pointer;
+  }
+
+  .input {
+    @apply w-full rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm transition-all duration-200 placeholder:text-neutral-400 focus:border-lobster-500 focus:outline-none focus:ring-2 focus:ring-lobster-500/20;
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-lobster-100 text-lobster-700;
+  }
+
+  .badge-secondary {
+    @apply badge bg-ocean-100 text-ocean-700;
+  }
+
+  .badge-success {
+    @apply badge bg-green-100 text-green-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-amber-100 text-amber-700;
+  }
+
+  .section-title {
+    @apply text-2xl md:text-3xl font-bold font-display text-neutral-900;
+  }
+
+  .lobster-emoji {
+    @apply inline-block animate-wave;
+  }
+}
+
+@layer utilities {
+  .text-gradient-lobster {
+    @apply bg-gradient-to-r from-lobster-500 to-lobster-700 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-ocean {
+    @apply bg-gradient-to-r from-ocean-500 to-ocean-700 bg-clip-text text-transparent;
+  }
+
+  .ocean-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230f766e' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400;
+}
+
+/* Loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  @apply bg-gradient-to-r from-neutral-200 via-neutral-100 to-neutral-200 bg-[length:200%_100%] animate-[shimmer_1.5s_ease-in-out_infinite];
+}
