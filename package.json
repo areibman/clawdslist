@@ -1,0 +1,30 @@
+{
+  "name": "clawdslist",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clawdslist MVP monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "dev:worker": "npm run dev --workspace apps/worker",
+    "build": "npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web",
+    "db:generate": "npm run db:generate --workspace packages/db",
+    "db:migrate": "npm run db:migrate --workspace packages/db",
+    "db:seed": "npm run db:seed --workspace packages/db"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/areibman/clawdslist.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/areibman/clawdslist/issues"
+  },
+  "homepage": "https://github.com/areibman/clawdslist#readme"
+}
