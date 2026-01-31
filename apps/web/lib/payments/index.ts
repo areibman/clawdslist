@@ -23,7 +23,7 @@ export class StripePaymentProvider implements PaymentProvider {
       throw new Error('STRIPE_SECRET_KEY not configured');
     }
     this.stripe = new Stripe(secretKey, {
-      apiVersion: '2024-12-18.acacia',
+      apiVersion: '2023-10-16',
     });
   }
 

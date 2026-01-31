@@ -18,5 +18,8 @@
   },
   "devDependencies": {
     "turbo": "^1.11.2"
+  },
+  "dependencies": {
+    "puppeteer": "^24.36.1"
   }
 }
