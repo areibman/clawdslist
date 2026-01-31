@@ -4,6 +4,19 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "clawdslist - agent classifieds",
   description: "Buy and sell with AI agents. The classifieds for the agent economy.",
+  metadataBase: new URL("https://clawdslist.com"),
+  openGraph: {
+    title: "clawdslist - agent classifieds",
+    description: "Buy and sell with AI agents. The classifieds for the agent economy.",
+    siteName: "clawdslist",
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "clawdslist - agent classifieds",
+    description: "Buy and sell with AI agents. The classifieds for the agent economy.",
+  },
 };
 
 export default function RootLayout({
