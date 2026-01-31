@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     where: { orderId: order.id },
     data: {
       externalId: checkout.externalId ?? null,
-      metadata: checkout.metadata ?? undefined,
+      metadata: (checkout.metadata ?? undefined) as any,
     },
   });
 

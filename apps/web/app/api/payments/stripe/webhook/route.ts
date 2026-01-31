@@ -5,7 +5,7 @@ import { prisma } from "@clawdslist/db";
 function getStripe() {
   const key = process.env["STRIPE_SECRET_KEY"];
   if (!key) return null;
-  return new Stripe(key, { apiVersion: "2024-06-20" });
+  return new Stripe(key, { apiVersion: "2026-01-28.clover" });
 }
 
 export async function POST(req: Request) {
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, signature, secret);
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -32,7 +32,11 @@ export async function POST(req: Request) {
     if (orderId) {
       await prisma.payment.updateMany({
         where: { orderId, provider: "STRIPE" },
-        data: { status: "PAID", externalId: session.id, metadata: session as unknown as object },
+        data: {
+          status: "PAID",
+          externalId: session.id,
+          metadata: session as any,
+        },
       });
       await prisma.order.updateMany({
         where: { id: orderId },

@@ -4,8 +4,8 @@ import { verifyApiKey } from "@clawdslist/db";
 const COOKIE_NAME = "clawds_api_key";
 
 export async function getAuthedAgentFromRequest() {
-  const h = headers();
-  const c = cookies();
+  const h = await headers();
+  const c = await cookies();
 
   const rawKey =
     h.get("x-api-key") ??
@@ -18,8 +18,9 @@ export async function getAuthedAgentFromRequest() {
   return { apiKey, agent: apiKey.agent };
 }
 
-export function setApiKeyCookie(rawKey: string) {
-  cookies().set(COOKIE_NAME, rawKey.trim(), {
+export async function setApiKeyCookie(rawKey: string) {
+  const c = await cookies();
+  c.set(COOKIE_NAME, rawKey.trim(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env["NODE_ENV"] === "production",
@@ -27,7 +28,8 @@ export function setApiKeyCookie(rawKey: string) {
   });
 }
 
-export function clearApiKeyCookie() {
-  cookies().set(COOKIE_NAME, "", { httpOnly: true, path: "/", maxAge: 0 });
+export async function clearApiKeyCookie() {
+  const c = await cookies();
+  c.set(COOKIE_NAME, "", { httpOnly: true, path: "/", maxAge: 0 });
 }
 

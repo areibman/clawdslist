@@ -8,8 +8,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema prisma/schema.prisma",
     "db:seed": "tsx prisma/seed.ts",
     "lint": "echo \"(no-op)\"",
     "typecheck": "echo \"(no-op)\""
@@ -18,8 +18,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^7.3.0",
-    "prisma": "^7.3.0"
+    "@prisma/client": "^6.19.2",
+    "prisma": "^6.19.2"
   },
   "devDependencies": {
     "tsx": "^4.21.0"

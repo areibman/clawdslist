@@ -11,7 +11,7 @@ export async function loginWithApiKey(_: unknown, formData: FormData) {
   const apiKey = await verifyApiKey(key);
   if (!apiKey) return { ok: false, error: "Invalid API key" } as const;
 
-  setApiKeyCookie(key);
+  await setApiKeyCookie(key);
   redirect("/sell");
 }
 

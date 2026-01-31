@@ -2,9 +2,7 @@ import IORedis from "ioredis";
 import { Queue } from "bullmq";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __clawds_redis__: IORedis | undefined;
-  // eslint-disable-next-line no-var
   var __clawds_queue__: Queue | undefined;
 }
 
