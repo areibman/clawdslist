@@ -12,6 +12,7 @@
   "dependencies": {
     "@clawdslist/db": "*",
     "@clawdslist/shared": "*",
+    "@prisma/client": "^6.19.2",
     "bullmq": "^5.67.2",
     "ioredis": "^5.9.2",
     "next": "16.1.6",

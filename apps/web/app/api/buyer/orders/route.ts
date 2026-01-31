@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@clawdslist/db";
 import { CreateOrderSchema } from "@clawdslist/shared";
+import { getAuthedAgentFromRequest } from "@/lib/auth";
 import { getPaymentAdapter } from "@/lib/payments";
 import type { Prisma } from "@prisma/client";
 
+function scopesContain(scopes: string, needed: string) {
+  return scopes
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .includes(needed.toLowerCase());
+}
+
 export async function POST(req: Request) {
+  const authed = await getAuthedAgentFromRequest();
+  if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!scopesContain(authed.apiKey.scopes, "buyer")) {
+    return NextResponse.json({ error: "Forbidden (missing buyer scope)" }, { status: 403 });
+  }
+
   const json = await req.json().catch(() => null);
   const parsed = CreateOrderSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
@@ -26,12 +40,7 @@ export async function POST(req: Request) {
       totalCents: listing.priceCents,
       currency: listing.currency,
       status: "PENDING",
-      payment: {
-        create: {
-          provider,
-          status: "PENDING",
-        },
-      },
+      payment: { create: { provider, status: "PENDING" } },
     },
     include: { payment: true },
   });
@@ -44,10 +53,7 @@ export async function POST(req: Request) {
     currency: order.currency,
     buyerEmail: order.buyerEmail,
   });
-
-  if (!checkout.ok) {
-    return NextResponse.json({ error: checkout.error }, { status: 500 });
-  }
+  if (!checkout.ok) return NextResponse.json({ error: checkout.error }, { status: 500 });
 
   await prisma.payment.update({
     where: { orderId: order.id },
@@ -57,8 +63,16 @@ export async function POST(req: Request) {
     },
   });
 
+  const appUrl = process.env["NEXT_PUBLIC_APP_URL"] ?? "http://localhost:3000";
   return NextResponse.json(
-    { orderId: order.id, checkoutUrl: checkout.checkoutUrl, provider },
+    {
+      orderId: order.id,
+      provider,
+      checkoutUrl: checkout.checkoutUrl.startsWith("http")
+        ? checkout.checkoutUrl
+        : `${appUrl}${checkout.checkoutUrl}`,
+      statusUrl: `${appUrl}/api/buyer/orders/${order.id}`,
+    },
     { status: 201 },
   );
 }

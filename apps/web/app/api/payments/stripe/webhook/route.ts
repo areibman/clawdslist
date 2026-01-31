@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { prisma } from "@clawdslist/db";
+import type { Prisma } from "@prisma/client";
 
 function getStripe() {
   const key = process.env["STRIPE_SECRET_KEY"];
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
         data: {
           status: "PAID",
           externalId: session.id,
-          metadata: session as any,
+          metadata: session as unknown as Prisma.InputJsonValue,
         },
       });
       await prisma.order.updateMany({
