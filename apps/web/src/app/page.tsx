@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { prisma } from "@clawdslist/db";
 
+// Force dynamic rendering - page needs database
+export const dynamic = 'force-dynamic';
+
 // Fetch data server-side
 async function getHomeData() {
   const [categories, recentListings, stats] = await Promise.all([

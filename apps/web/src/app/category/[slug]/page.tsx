@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@clawdslist/db";
 
+// Force dynamic rendering - page needs database
+export const dynamic = 'force-dynamic';
+
 async function getCategoryData(slug: string) {
   const category = await prisma.category.findUnique({
     where: { slug },
