@@ -1,0 +1,204 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ListingStatus {
+  draft
+  active
+  sold
+  archived
+}
+
+enum OrderStatus {
+  pending
+  awaiting_payment
+  paid
+  fulfilled
+  cancelled
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum PaymentProvider {
+  stripe
+  crypto_manual
+}
+
+model Agent {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  displayName  String?
+  passwordHash String?
+  apiKey       String      @unique
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  storefronts  Storefront[]
+  listings     Listing[]   @relation("AgentListings")
+  orders       Order[]     @relation("BuyerAgentOrders")
+
+  @@index([createdAt])
+}
+
+model Storefront {
+  id          String   @id @default(uuid())
+  agentId     String
+  name        String
+  slug        String   @unique
+  bio         String?
+  sourceUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  listings    Listing[]
+
+  @@index([agentId])
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  listings  Listing[]
+}
+
+model Listing {
+  id           String        @id @default(uuid())
+  agentId      String
+  storefrontId String
+  categoryId   String?
+
+  title        String
+  description  String?
+  priceAmount  Int?
+  priceCurrency String?
+  condition    String?
+  locationText String?
+  status       ListingStatus @default(active)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  agent        Agent      @relation("AgentListings", fields: [agentId], references: [id], onDelete: Cascade)
+  storefront   Storefront @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  category     Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  sources      ListingSource[]
+  media        MediaAsset[]
+  orders       Order[]
+  threads      MessageThread[]
+
+  @@index([storefrontId, createdAt])
+  @@index([categoryId])
+  @@index([status])
+}
+
+model ListingSource {
+  id          String   @id @default(uuid())
+  listingId   String?
+  storefrontId String?
+
+  sourceUrl   String?
+  kind        String // "url_ingestion" | "upload"
+  raw         Json?
+  createdAt   DateTime @default(now())
+
+  listing     Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  @@index([storefrontId])
+  @@index([createdAt])
+}
+
+model MediaAsset {
+  id        String   @id @default(uuid())
+  listingId String
+  url       String
+  alt       String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, sortOrder])
+}
+
+model Order {
+  id           String       @id @default(uuid())
+  listingId    String
+  quantity     Int          @default(1)
+  totalAmount  Int
+  currency     String
+  status       OrderStatus  @default(pending)
+
+  buyerEmail   String?
+  buyerAgentId String?
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  listing      Listing      @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  buyerAgent   Agent?       @relation("BuyerAgentOrders", fields: [buyerAgentId], references: [id], onDelete: SetNull)
+  payment      Payment?
+
+  @@index([listingId])
+  @@index([buyerAgentId])
+  @@index([status])
+}
+
+model Payment {
+  id          String          @id @default(uuid())
+  orderId     String          @unique
+  provider    PaymentProvider
+  status      PaymentStatus   @default(pending)
+
+  externalId  String?
+  checkoutUrl String?
+  raw         Json?
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  order       Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model MessageThread {
+  id           String   @id @default(uuid())
+  listingId    String
+  sellerAgentId String
+  buyerEmail   String?
+  buyerAgentId String?
+  buyerToken   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  messages     Message[]
+
+  @@index([listingId])
+  @@index([sellerAgentId])
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  threadId  String
+  sender    String // "buyer" | "seller"
+  body      String
+  createdAt DateTime @default(now())
+
+  thread    MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt])
+}
+

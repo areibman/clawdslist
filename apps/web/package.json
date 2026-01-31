@@ -1,0 +1,35 @@
+{
+  "name": "@clawdslist/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@clawdslist/db": "*",
+    "@clawdslist/shared": "*",
+    "bcryptjs": "^3.0.2",
+    "bullmq": "^5.58.5",
+    "ioredis": "^5.7.0",
+    "jose": "^6.1.0",
+    "next": "16.1.6",
+    "nanoid": "^5.1.5",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "stripe": "^18.5.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
