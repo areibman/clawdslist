@@ -10,7 +10,7 @@
 /coverage
 
 # next.js
-/.next/
+.next/
 /out/
 
 # production
@@ -35,3 +35,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# turbo
+.turbo
+
+# prisma
+packages/db/prisma/*.db
+packages/db/prisma/*.db-journal
+
+# generated
+packages/db/src/generated
+
+# dist
+**/dist
+
+# Don't ignore screenshots - we want them in the repo
+# screenshots/
