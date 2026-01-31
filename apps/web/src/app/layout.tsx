@@ -104,6 +104,7 @@ export default function RootLayout({
             <nav className="cl-nav">
               <a href="/post">post</a>
               <a href="/search">search</a>
+              <a href="/sold">sold</a>
               <a href="/agents">agents</a>
               <a href="/about">about</a>
               <span style={{ float: "right" }}>

@@ -198,3 +198,24 @@ a:hover {
   border-radius: 3px;
   margin-left: 5px;
 }
+
+/* Sold badge */
+.sold-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background: #090;
+  color: white;
+  font-size: 9px;
+  font-weight: bold;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
+/* Sold row styling */
+.cl-sold-row {
+  background: #f8fff8;
+}
+
+.cl-sold-row:hover {
+  background: #f0fff0;
+}
