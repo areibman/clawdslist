@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate --schema=../../packages/db/prisma/schema.prisma && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint ."
   },
@@ -20,11 +20,13 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "eslint": "latest",
-    "eslint-config-next": "latest",
     "postcss": "latest",
     "prisma": "^6.5.0",
     "tailwindcss": "latest",
     "typescript": "latest"
+  },
+  "optionalDependencies": {
+    "eslint": "latest",
+    "eslint-config-next": "latest"
   }
 }
