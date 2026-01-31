@@ -1,0 +1,434 @@
+// Clawdslist Database Schema
+// A lobster-themed marketplace for agents
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============ Authentication & Users ============
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String?
+  name          String?
+  avatarUrl     String?
+  isAdmin       Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  profile       Profile?
+  agents        Agent[]
+  orders        Order[]    @relation("BuyerOrders")
+  sentMessages  Message[]  @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+
+  @@map("users")
+}
+
+model Agent {
+  id            String    @id @default(cuid())
+  name          String
+  apiKey        String    @unique
+  apiKeyHash    String
+  type          AgentType
+  isActive      Boolean   @default(true)
+  rateLimit     Int       @default(100) // requests per minute
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id])
+  storefront    Storefront?
+  listings      Listing[]
+  orders        Order[]   @relation("AgentOrders")
+  auditLogs     AuditLog[]
+
+  @@map("agents")
+}
+
+enum AgentType {
+  SELLER
+  BUYER
+  ADMIN
+}
+
+model Profile {
+  id            String    @id @default(cuid())
+  bio           String?
+  website       String?
+  location      String?
+  reputation    Float     @default(0)
+  totalSales    Int       @default(0)
+  totalPurchases Int      @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// ============ Marketplace ============
+
+model Category {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  slug          String    @unique
+  description   String?
+  icon          String?   // Lobster-themed emoji or icon class
+  parentId      String?
+  parent        Category? @relation("CategoryChildren", fields: [parentId], references: [id])
+  children      Category[] @relation("CategoryChildren")
+  isActive      Boolean   @default(true)
+  sortOrder     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  listings      Listing[]
+
+  @@map("categories")
+}
+
+model Location {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  region        String?
+  country       String    @default("US")
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  listings      Listing[]
+  storefronts   Storefront[]
+
+  @@map("locations")
+}
+
+model Storefront {
+  id            String    @id @default(cuid())
+  name          String
+  slug          String    @unique
+  description   String?
+  logoUrl       String?
+  bannerUrl     String?
+  website       String?
+  isVerified    Boolean   @default(false)
+  rating        Float     @default(0)
+  totalReviews  Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  agentId       String    @unique
+  agent         Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id])
+  listings      Listing[]
+  sources       ListingSource[]
+
+  @@map("storefronts")
+}
+
+model Listing {
+  id            String    @id @default(cuid())
+  title         String
+  slug          String
+  description   String
+  price         Decimal   @db.Decimal(12, 2)
+  currency      String    @default("USD")
+  cryptoPrice   Decimal?  @db.Decimal(18, 8) // For crypto pricing
+  cryptoCurrency String?  // ETH, SOL, etc.
+  quantity      Int       @default(1)
+  condition     ListingCondition @default(NEW)
+  status        ListingStatus @default(DRAFT)
+  isDigital     Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+  viewCount     Int       @default(0)
+  expiresAt     DateTime?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  storefrontId  String
+  storefront    Storefront @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  locationId    String?
+  location      Location? @relation(fields: [locationId], references: [id])
+  agentId       String?
+  agent         Agent?    @relation(fields: [agentId], references: [id])
+  media         MediaAsset[]
+  sources       ListingSource[]
+  orderItems    OrderItem[]
+  messages      Message[]
+
+  @@unique([storefrontId, slug])
+  @@index([status, categoryId])
+  @@index([status, publishedAt])
+  @@map("listings")
+}
+
+enum ListingCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  POOR
+  DIGITAL // For digital goods/services
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  SOLD
+  EXPIRED
+  REMOVED
+}
+
+model MediaAsset {
+  id            String    @id @default(cuid())
+  url           String
+  thumbnailUrl  String?
+  type          MediaType
+  mimeType      String?
+  size          Int?      // bytes
+  width         Int?
+  height        Int?
+  altText       String?
+  sortOrder     Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  listingId     String
+  listing       Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@map("media_assets")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model ListingSource {
+  id            String    @id @default(cuid())
+  sourceUrl     String?
+  sourceType    SourceType
+  rawPayload    Json?     // Raw data from Firecrawl/Reducto
+  extractedData Json?     // Normalized extracted data
+  status        IngestionStatus @default(PENDING)
+  errorMessage  String?
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  listingId     String?
+  listing       Listing?  @relation(fields: [listingId], references: [id])
+  storefrontId  String?
+  storefront    Storefront? @relation(fields: [storefrontId], references: [id])
+
+  @@map("listing_sources")
+}
+
+enum SourceType {
+  URL_CRAWL
+  DIRECT_UPLOAD
+  API_IMPORT
+  MANUAL_ENTRY
+}
+
+enum IngestionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  NEEDS_REVIEW
+}
+
+// ============ Orders & Payments ============
+
+model Order {
+  id            String    @id @default(cuid())
+  orderNumber   String    @unique
+  status        OrderStatus @default(PENDING)
+  subtotal      Decimal   @db.Decimal(12, 2)
+  tax           Decimal   @db.Decimal(12, 2) @default(0)
+  total         Decimal   @db.Decimal(12, 2)
+  currency      String    @default("USD")
+  shippingAddress Json?
+  billingAddress Json?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  userId        String?
+  user          User?     @relation("BuyerOrders", fields: [userId], references: [id])
+  agentId       String?
+  agent         Agent?    @relation("AgentOrders", fields: [agentId], references: [id])
+  items         OrderItem[]
+  payments      Payment[]
+
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  REFUNDED
+}
+
+model OrderItem {
+  id            String    @id @default(cuid())
+  quantity      Int
+  unitPrice     Decimal   @db.Decimal(12, 2)
+  total         Decimal   @db.Decimal(12, 2)
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  listingId     String
+  listing       Listing   @relation(fields: [listingId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            String    @id @default(cuid())
+  amount        Decimal   @db.Decimal(12, 2)
+  currency      String    @default("USD")
+  method        PaymentMethod
+  provider      PaymentProvider
+  providerPaymentId String?
+  providerData  Json?     // Raw response from payment provider
+  status        PaymentStatus @default(PENDING)
+  paidAt        DateTime?
+  failedAt      DateTime?
+  refundedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([status, provider])
+  @@map("payments")
+}
+
+enum PaymentMethod {
+  CARD
+  CRYPTO
+  BANK_TRANSFER
+}
+
+enum PaymentProvider {
+  STRIPE
+  COINBASE
+  MANUAL
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+// ============ Messaging ============
+
+model Message {
+  id            String    @id @default(cuid())
+  content       String
+  isRead        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  senderId      String
+  sender        User      @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId    String
+  receiver      User      @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  listingId     String?
+  listing       Listing?  @relation(fields: [listingId], references: [id])
+
+  @@index([senderId, receiverId])
+  @@map("messages")
+}
+
+// ============ Audit & Logging ============
+
+model AuditLog {
+  id            String    @id @default(cuid())
+  action        String
+  entityType    String
+  entityId      String?
+  metadata      Json?
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime  @default(now())
+
+  // Relations
+  agentId       String?
+  agent         Agent?    @relation(fields: [agentId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============ Job Queue (for ingestion tracking) ============
+
+model Job {
+  id            String    @id @default(cuid())
+  type          String
+  payload       Json
+  status        JobStatus @default(PENDING)
+  priority      Int       @default(0)
+  attempts      Int       @default(0)
+  maxAttempts   Int       @default(3)
+  lastError     String?
+  scheduledFor  DateTime  @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, scheduledFor])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
