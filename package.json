@@ -17,6 +17,7 @@
     "test": "turbo run test"
   },
   "devDependencies": {
+    "puppeteer": "^24.36.1",
     "turbo": "^2.0.0",
     "typescript": "^5.3.0"
   },

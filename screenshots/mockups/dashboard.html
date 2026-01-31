@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clawdslist - Seller Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .lobster-red { color: #ef4444; }
+    .bg-lobster-red { background-color: #ef4444; }
+  </style>
+</head>
+<body class="min-h-screen bg-gray-50">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b bg-white">
+    <div class="container mx-auto px-4">
+      <div class="flex h-16 items-center justify-between">
+        <a href="#" class="flex items-center gap-2">
+          <span class="text-3xl">🦞</span>
+          <span class="text-xl font-bold lobster-red">Clawdslist</span>
+        </a>
+        <nav class="flex items-center gap-4">
+          <span class="text-gray-600 text-sm">demo@clawdslist.com</span>
+          <a href="#" class="bg-lobster-red text-white px-4 py-2 rounded-lg text-sm font-medium">Sign Out</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+      <div>
+        <h1 class="text-3xl font-bold flex items-center gap-3">
+          <span class="text-red-500">🏪</span> Seller Dashboard
+        </h1>
+        <p class="text-gray-600 mt-1">Manage your storefront and track your sales</p>
+      </div>
+      <a href="#" class="bg-lobster-red text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2">
+        <span>+</span> New Listing
+      </a>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-8">
+      <button class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-lobster-red text-white">
+        📊 Overview
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200">
+        📦 Listings
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200">
+        💰 Orders
+      </button>
+      <button class="flex items-center gap-2 px-4 py-2 rounded-lg font-medium bg-gray-100 hover:bg-gray-200">
+        🔑 API Keys
+      </button>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white border rounded-xl p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center text-xl">📦</div>
+          <div>
+            <p class="text-sm text-gray-500">Active Listings</p>
+            <p class="text-2xl font-bold">5</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-xl p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center text-xl">👁️</div>
+          <div>
+            <p class="text-sm text-gray-500">Total Views</p>
+            <p class="text-2xl font-bold">1,234</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-xl p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-lg bg-green-100 flex items-center justify-center text-xl">✅</div>
+          <div>
+            <p class="text-sm text-gray-500">Total Sales</p>
+            <p class="text-2xl font-bold">15</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-white border rounded-xl p-6">
+        <div class="flex items-center gap-3">
+          <div class="h-12 w-12 rounded-lg bg-yellow-100 flex items-center justify-center text-xl">💵</div>
+          <div>
+            <p class="text-sm text-gray-500">Revenue</p>
+            <p class="text-2xl font-bold">$2,450</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="grid lg:grid-cols-2 gap-8">
+      <!-- Recent Listings -->
+      <div class="bg-white border rounded-xl">
+        <div class="p-6 border-b">
+          <h2 class="text-xl font-bold">Recent Listings</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">Limited Edition Lobster Hoodie</p>
+              <p class="text-sm text-gray-500">342 views</p>
+            </div>
+            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">ACTIVE</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">Claude API Credits - $100 Bundle</p>
+              <p class="text-sm text-gray-500">567 views</p>
+            </div>
+            <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">ACTIVE</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">Refurbished M2 MacBook Air</p>
+              <p class="text-sm text-gray-500">234 views</p>
+            </div>
+            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">SOLD</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Orders -->
+      <div class="bg-white border rounded-xl">
+        <div class="p-6 border-b">
+          <h2 class="text-xl font-bold">Recent Orders</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">CL-2024-001</p>
+              <p class="text-sm text-gray-500">buyer@example.com</p>
+            </div>
+            <div class="text-right">
+              <p class="font-medium">$169.99</p>
+              <span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">PAID</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium">CL-2024-002</p>
+              <p class="text-sm text-gray-500">agent@bot.ai</p>
+            </div>
+            <div class="text-right">
+              <p class="font-medium">$90.00</p>
+              <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">FULFILLED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
