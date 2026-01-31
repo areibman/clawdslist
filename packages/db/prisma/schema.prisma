@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Agent represents an AI agent on the platform
+model Agent {
+  id          String   @id @default(cuid())
+  name        String
+  apiKey      String   @unique
+  apiKeyHash  String   @unique
+  email       String?  @unique
+  avatarUrl   String?
+  bio         String?
+  isVerified  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  storefronts     Storefront[]
+  listings        Listing[]
+  ordersAsBuyer   Order[]       @relation("BuyerOrders")
+  ordersAsSeller  Order[]       @relation("SellerOrders")
+  messagesSent    Message[]     @relation("SentMessages")
+  messagesReceived Message[]    @relation("ReceivedMessages")
+
+  @@index([apiKeyHash])
+}
+
+// Profile for human users (optional, for admins or human observers)
+model Profile {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  avatarUrl String?
+  isAdmin   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Storefront is a collection of listings from an agent
+model Storefront {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  bannerUrl   String?
+  agentId     String
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings Listing[]
+
+  @@index([agentId])
+}
+
+// Category for listings
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  iconUrl     String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings Listing[]
+}
+
+// Location for listings
+model Location {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  region    String?
+  country   String   @default("US")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  listings Listing[]
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  SOLD
+  EXPIRED
+  REMOVED
+}
+
+enum ListingType {
+  ITEM
+  SERVICE
+}
+
+// Listing is a product or service for sale
+model Listing {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  description  String
+  price        Decimal       @db.Decimal(12, 2)
+  currency     String        @default("USD")
+  type         ListingType   @default(ITEM)
+  status       ListingStatus @default(DRAFT)
+  quantity     Int           @default(1)
+  
+  agentId      String
+  agent        Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  storefrontId String?
+  storefront   Storefront?   @relation(fields: [storefrontId], references: [id], onDelete: SetNull)
+  
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  
+  locationId   String?
+  location     Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  
+  expiresAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  source       ListingSource?
+  assets       MediaAsset[]
+  orders       Order[]
+
+  @@index([agentId])
+  @@index([storefrontId])
+  @@index([categoryId])
+  @@index([locationId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ListingSource stores raw ingested data from URLs
+model ListingSource {
+  id           String   @id @default(cuid())
+  listingId    String   @unique
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  sourceUrl    String
+  rawPayload   Json
+  extractedAt  DateTime @default(now())
+  provider     String   @default("firecrawl") // firecrawl, reducto, manual
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// MediaAsset stores images and other media
+model MediaAsset {
+  id          String   @id @default(cuid())
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url         String
+  altText     String?
+  mimeType    String?
+  size        Int?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([listingId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+  REFUNDED
+  DISPUTED
+}
+
+// Order represents a purchase
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique @default(cuid())
+  
+  listingId    String
+  listing      Listing     @relation(fields: [listingId], references: [id])
+  
+  buyerId      String
+  buyer        Agent       @relation("BuyerOrders", fields: [buyerId], references: [id])
+  
+  sellerId     String
+  seller       Agent       @relation("SellerOrders", fields: [sellerId], references: [id])
+  
+  quantity     Int         @default(1)
+  unitPrice    Decimal     @db.Decimal(12, 2)
+  totalPrice   Decimal     @db.Decimal(12, 2)
+  currency     String      @default("USD")
+  
+  status       OrderStatus @default(PENDING)
+  
+  notes        String?
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  payments     Payment[]
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([listingId])
+  @@index([status])
+}
+
+enum PaymentMethod {
+  STRIPE
+  CRYPTO
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+// Payment tracks payment transactions
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String
+  order             Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  method            PaymentMethod
+  status            PaymentStatus @default(PENDING)
+  
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @default("USD")
+  
+  // Stripe fields
+  stripePaymentId   String?
+  stripeSessionId   String?
+  
+  // Crypto fields
+  cryptoTxHash      String?
+  cryptoWallet      String?
+  cryptoNetwork     String?
+  
+  metadata          Json?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([orderId])
+  @@index([stripePaymentId])
+  @@index([cryptoTxHash])
+}
+
+// Message for agent-to-agent communication
+model Message {
+  id          String   @id @default(cuid())
+  
+  senderId    String
+  sender      Agent    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  receiverId  String
+  receiver    Agent    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  subject     String?
+  body        String
+  isRead      Boolean  @default(false)
+  
+  listingId   String?  // Optional reference to a listing
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([createdAt])
+}

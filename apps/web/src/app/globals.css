@@ -1,0 +1,200 @@
+@import "tailwindcss";
+
+/* Craigslist-style base styling with lobster theme */
+:root {
+  --claw-purple: #800080;
+  --claw-blue: #0000ff;
+  --claw-red: #cc0000;
+  --claw-orange: #ff6b35;
+  --claw-cream: #faf8f5;
+  --claw-dark: #1a1a1a;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+  background-color: var(--claw-cream);
+  color: var(--claw-dark);
+}
+
+a {
+  color: var(--claw-blue);
+  text-decoration: underline;
+}
+
+a:visited {
+  color: var(--claw-purple);
+}
+
+a:hover {
+  color: var(--claw-red);
+}
+
+/* Craigslist-style layout */
+.cl-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px;
+}
+
+.cl-header {
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+
+.cl-logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--claw-red);
+  text-decoration: none;
+}
+
+.cl-logo:hover {
+  color: var(--claw-orange);
+}
+
+.cl-nav {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.cl-nav a {
+  margin-right: 10px;
+}
+
+/* Category boxes */
+.cl-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.cl-category-box {
+  flex: 1;
+  min-width: 200px;
+}
+
+.cl-category-title {
+  font-weight: bold;
+  font-size: 13px;
+  margin-bottom: 5px;
+  color: var(--claw-dark);
+}
+
+.cl-category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 12px;
+}
+
+.cl-category-list li {
+  margin: 2px 0;
+}
+
+/* Listing rows */
+.cl-listing-row {
+  display: flex;
+  padding: 4px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.cl-listing-row:hover {
+  background-color: #f5f5f5;
+}
+
+.cl-listing-date {
+  width: 80px;
+  color: #666;
+  font-size: 11px;
+}
+
+.cl-listing-title {
+  flex: 1;
+}
+
+.cl-listing-price {
+  width: 100px;
+  text-align: right;
+  font-weight: bold;
+  color: #090;
+}
+
+.cl-listing-location {
+  width: 120px;
+  text-align: right;
+  color: #666;
+  font-size: 11px;
+}
+
+/* Search box */
+.cl-search {
+  margin: 15px 0;
+  padding: 10px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+}
+
+.cl-search input[type="text"] {
+  padding: 5px;
+  width: 300px;
+  border: 1px solid #999;
+  font-size: 14px;
+}
+
+.cl-search button {
+  padding: 5px 15px;
+  background: var(--claw-red);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cl-search button:hover {
+  background: var(--claw-orange);
+}
+
+/* Post button */
+.cl-post-btn {
+  display: inline-block;
+  padding: 8px 20px;
+  background: var(--claw-orange);
+  color: white !important;
+  text-decoration: none !important;
+  font-weight: bold;
+  border-radius: 3px;
+}
+
+.cl-post-btn:hover {
+  background: var(--claw-red);
+}
+
+/* Footer */
+.cl-footer {
+  margin-top: 30px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  font-size: 11px;
+  color: #666;
+}
+
+/* Lobster mascot */
+.lobster-icon::before {
+  content: "🦞";
+  margin-right: 5px;
+}
+
+/* Agent badge */
+.agent-badge {
+  display: inline-block;
+  padding: 1px 5px;
+  background: var(--claw-purple);
+  color: white;
+  font-size: 10px;
+  border-radius: 3px;
+  margin-left: 5px;
+}
