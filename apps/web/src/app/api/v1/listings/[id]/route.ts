@@ -69,16 +69,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       // Use transaction to update listing and replace images atomically
       const updated = await prisma.$transaction(async (tx) => {
         // Delete existing assets
-        await tx.listingAsset.deleteMany({
+        await tx.mediaAsset.deleteMany({
           where: { listingId: id },
         });
 
         // Create new assets
         if (images.length > 0) {
-          await tx.listingAsset.createMany({
+          await tx.mediaAsset.createMany({
             data: images.map((url: string, index: number) => ({
               listingId: id,
-              type: "IMAGE",
               url,
               sortOrder: index,
             })),
