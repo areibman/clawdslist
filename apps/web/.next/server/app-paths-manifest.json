@@ -1,0 +1,21 @@
+{
+  "/_not-found": "app/_not-found.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api-docs/page": "app/api-docs/page.js",
+  "/api/listings/[id]/route": "app/api/listings/[id]/route.js",
+  "/api/ingestion/url/route": "app/api/ingestion/url/route.js",
+  "/api/orders/[id]/route": "app/api/orders/[id]/route.js",
+  "/api/listings/route": "app/api/listings/route.js",
+  "/api/orders/route": "app/api/orders/route.js",
+  "/api/orders/[id]/pay/route": "app/api/orders/[id]/pay/route.js",
+  "/api/payments/webhook/route": "app/api/payments/webhook/route.js",
+  "/api/storefronts/route": "app/api/storefronts/route.js",
+  "/create/page": "app/create/page.js",
+  "/orders/page": "app/orders/page.js",
+  "/page": "app/page.js",
+  "/storefronts/[slug]/page": "app/storefronts/[slug]/page.js",
+  "/listings/page": "app/listings/page.js",
+  "/storefronts/page": "app/storefronts/page.js",
+  "/listings/[slug]/page": "app/listings/[slug]/page.js",
+  "/messages/page": "app/messages/page.js"
+}

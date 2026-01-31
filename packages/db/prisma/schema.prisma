@@ -1,0 +1,376 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE ENTITIES
+// ============================================
+
+model Agent {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String
+  apiKey      String   @unique @default(cuid())
+  apiKeyHash  String?  // For secure comparison
+  isHuman     Boolean  @default(true)
+  isAdmin     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  profile     Profile?
+  storefronts Storefront[]
+  listings    Listing[]
+  orders      Order[]      @relation("BuyerOrders")
+  messages    Message[]    @relation("SentMessages")
+  received    Message[]    @relation("ReceivedMessages")
+
+  @@index([apiKey])
+  @@index([email])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  agentId     String   @unique
+  bio         String?
+  avatarUrl   String?
+  website     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// MARKETPLACE ENTITIES
+// ============================================
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  icon        String?   // Emoji or icon name
+  parentId    String?
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  parent      Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryHierarchy")
+  listings    Listing[]
+
+  @@index([slug])
+  @@index([parentId])
+}
+
+model Location {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  region      String?
+  country     String    @default("US")
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  listings    Listing[]
+  storefronts Storefront[]
+
+  @@index([slug])
+}
+
+model Storefront {
+  id          String   @id @default(cuid())
+  agentId     String
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  bannerUrl   String?
+  website     String?
+  locationId  String?
+  isVerified  Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent       Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  location    Location? @relation(fields: [locationId], references: [id])
+  listings    Listing[]
+  sources     ListingSource[]
+
+  @@index([agentId])
+  @@index([slug])
+}
+
+model Listing {
+  id           String        @id @default(cuid())
+  agentId      String
+  storefrontId String?
+  categoryId   String
+  locationId   String?
+  
+  title        String
+  slug         String        @unique
+  description  String
+  price        Decimal       @db.Decimal(10, 2)
+  currency     String        @default("USD")
+  cryptoPrice  Decimal?      @db.Decimal(18, 8)
+  cryptoCurrency String?     // ETH, SOL, USDC, etc.
+  
+  condition    ListingCondition @default(NEW)
+  status       ListingStatus    @default(DRAFT)
+  quantity     Int              @default(1)
+  
+  isDigital    Boolean  @default(false)
+  isFeatured   Boolean  @default(false)
+  viewCount    Int      @default(0)
+  
+  metadata     Json?    // Flexible additional data
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  publishedAt  DateTime?
+  expiresAt    DateTime?
+
+  agent        Agent         @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  storefront   Storefront?   @relation(fields: [storefrontId], references: [id])
+  category     Category      @relation(fields: [categoryId], references: [id])
+  location     Location?     @relation(fields: [locationId], references: [id])
+  media        MediaAsset[]
+  sources      ListingSource[]
+  orders       Order[]
+  messages     Message[]
+
+  @@index([agentId])
+  @@index([storefrontId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([price])
+}
+
+enum ListingCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  POOR
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  SOLD
+  EXPIRED
+  REMOVED
+}
+
+model ListingSource {
+  id           String   @id @default(cuid())
+  listingId    String?
+  storefrontId String?
+  
+  sourceType   SourceType
+  sourceUrl    String?
+  rawPayload   Json?    // Original scraped/uploaded data
+  processedAt  DateTime?
+  status       IngestionStatus @default(PENDING)
+  errorMessage String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  listing      Listing?    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  storefront   Storefront? @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([sourceType])
+}
+
+enum SourceType {
+  URL_CRAWL
+  DIRECT_UPLOAD
+  API_IMPORT
+  BULK_IMPORT
+}
+
+enum IngestionStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  NEEDS_REVIEW
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  listingId   String
+  
+  url         String
+  thumbnailUrl String?
+  type        MediaType @default(IMAGE)
+  mimeType    String?
+  size        Int?      // bytes
+  width       Int?
+  height      Int?
+  altText     String?
+  sortOrder   Int       @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+// ============================================
+// ORDER & PAYMENT ENTITIES
+// ============================================
+
+model Order {
+  id           String      @id @default(cuid())
+  orderNumber  String      @unique @default(cuid())
+  buyerId      String
+  listingId    String
+  
+  quantity     Int         @default(1)
+  subtotal     Decimal     @db.Decimal(10, 2)
+  fees         Decimal     @db.Decimal(10, 2) @default(0)
+  total        Decimal     @db.Decimal(10, 2)
+  currency     String      @default("USD")
+  
+  status       OrderStatus @default(PENDING)
+  
+  shippingAddress Json?
+  billingAddress  Json?
+  notes           String?
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  paidAt       DateTime?
+  fulfilledAt  DateTime?
+  cancelledAt  DateTime?
+
+  buyer        Agent    @relation("BuyerOrders", fields: [buyerId], references: [id])
+  listing      Listing  @relation(fields: [listingId], references: [id])
+  payments     Payment[]
+
+  @@index([buyerId])
+  @@index([listingId])
+  @@index([status])
+  @@index([orderNumber])
+}
+
+enum OrderStatus {
+  PENDING
+  AWAITING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  FULFILLED
+  CANCELLED
+  REFUNDED
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  orderId         String
+  
+  amount          Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  
+  provider        PaymentProvider
+  providerPaymentId String?     // Stripe session ID, crypto tx hash, etc.
+  
+  status          PaymentStatus @default(PENDING)
+  
+  metadata        Json?         // Provider-specific data
+  errorMessage    String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime?
+
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([provider])
+  @@index([status])
+  @@index([providerPaymentId])
+}
+
+enum PaymentProvider {
+  STRIPE
+  COINBASE
+  CRYPTO_DIRECT
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  EXPIRED
+}
+
+// ============================================
+// MESSAGING
+// ============================================
+
+model Message {
+  id          String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  listingId   String?
+  
+  content     String
+  isRead      Boolean  @default(false)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender      Agent    @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    Agent    @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  listing     Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([listingId])
+}
+
+// ============================================
+// AUDIT LOG
+// ============================================
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  agentId     String?
+  action      String
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([agentId])
+  @@index([entityType])
+  @@index([createdAt])
+}
