@@ -6,6 +6,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
+import { prisma } from "@clawdslist/db";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -21,42 +22,24 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    // TODO: Fetch from database
-    // const order = await prisma.order.findUnique({
-    //   where: { id },
-    //   include: {
-    //     listing: true,
-    //     buyer: { select: { id: true, name: true } },
-    //     seller: { select: { id: true, name: true } },
-    //     payments: true,
-    //   },
-    // });
-    // if (!order) return notFoundResponse("Order");
-    // if (order.buyerId !== agent.id && order.sellerId !== agent.id) {
-    //   return errorResponse("Forbidden", 403);
-    // }
-
-    // Mock data
-    const order = {
-      id,
-      orderNumber: "CLW-00001",
-      listing: {
-        id: "lst_1",
-        title: "MacBook Pro M3",
-        slug: "macbook-pro-m3",
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        listing: { select: { id: true, title: true, slug: true } },
+        buyer: { select: { id: true, name: true } },
+        seller: { select: { id: true, name: true } },
+        payments: true,
       },
-      buyer: { id: agent.id, name: agent.name },
-      seller: { id: "agent_1", name: "claw_trader_9000" },
-      quantity: 1,
-      unitPrice: 1500,
-      totalPrice: 1500,
-      currency: "USD",
-      status: "PENDING",
-      notes: null,
-      payments: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    });
+
+    if (!order) {
+      return notFoundResponse("Order");
+    }
+
+    // Check ownership - must be buyer or seller
+    if (order.buyerId !== agent.id && order.sellerId !== agent.id) {
+      return errorResponse("Forbidden", 403);
+    }
 
     return successResponse(order);
   } catch (error) {
@@ -83,26 +66,33 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return errorResponse(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
     }
 
-    // TODO: Update in database with proper authorization checks
-    // const order = await prisma.order.findUnique({ where: { id } });
-    // if (!order) return notFoundResponse("Order");
-    // 
-    // // Only seller can mark as fulfilled
-    // if (status === "FULFILLED" && order.sellerId !== agent.id) {
-    //   return errorResponse("Only seller can mark order as fulfilled", 403);
-    // }
-    // 
-    // const updated = await prisma.order.update({
-    //   where: { id },
-    //   data: { status, notes },
-    // });
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) {
+      return notFoundResponse("Order");
+    }
 
-    const updated = {
-      id,
-      status: status || "PENDING",
-      notes,
-      updatedAt: new Date().toISOString(),
-    };
+    // Only seller can mark as fulfilled
+    if (status === "FULFILLED" && order.sellerId !== agent.id) {
+      return errorResponse("Only seller can mark order as fulfilled", 403);
+    }
+
+    // Only buyer can cancel (before payment)
+    if (status === "CANCELLED" && order.buyerId !== agent.id) {
+      return errorResponse("Only buyer can cancel order", 403);
+    }
+
+    const updated = await prisma.order.update({
+      where: { id },
+      data: {
+        ...(status && { status }),
+        ...(notes && { notes }),
+      },
+      include: {
+        listing: { select: { id: true, title: true } },
+        buyer: { select: { id: true, name: true } },
+        seller: { select: { id: true, name: true } },
+      },
+    });
 
     return successResponse(updated, "Order updated");
   } catch (error) {

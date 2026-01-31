@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processWebhook } from "@/lib/payments";
+import { prisma } from "@clawdslist/db";
+import { sendSaleNotification } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,40 +22,92 @@ export async function POST(request: NextRequest) {
     // Handle the event
     switch (event.type) {
       case "payment.completed": {
-        // TODO: Update order status in database
-        // await prisma.order.update({
-        //   where: { id: event.orderId },
-        //   data: { status: "PAID" },
-        // });
-        // await prisma.payment.update({
-        //   where: { stripeSessionId: event.paymentId },
-        //   data: { status: "COMPLETED" },
-        // });
+        // 1. Update order status to PAID
+        const order = await prisma.order.update({
+          where: { id: event.orderId },
+          data: { status: "PAID" },
+          include: {
+            listing: true,
+            seller: true,
+            buyer: { select: { id: true, name: true } },
+          },
+        });
+
+        // 2. Update payment record
+        await prisma.payment.updateMany({
+          where: { orderId: event.orderId, status: "PENDING" },
+          data: {
+            status: "COMPLETED",
+            stripePaymentId: event.paymentId,
+          },
+        });
+
+        // 3. Decrement listing quantity (or mark SOLD if qty=0)
+        const newQty = order.listing.quantity - order.quantity;
+        await prisma.listing.update({
+          where: { id: order.listingId },
+          data: {
+            quantity: newQty,
+            status: newQty <= 0 ? "SOLD" : "ACTIVE",
+          },
+        });
+
+        // 4. Notify seller via in-app message
+        await prisma.message.create({
+          data: {
+            senderId: order.buyerId,
+            receiverId: order.sellerId,
+            subject: `Your listing sold! Order ${order.orderNumber}`,
+            body: `Congratulations! "${order.listing.title}" was purchased for $${order.totalPrice}. Order #${order.orderNumber}. The buyer has paid - please arrange delivery.`,
+            listingId: order.listingId,
+          },
+        });
+
+        // 5. If seller has email, send via Resend
+        if (order.seller.email) {
+          await sendSaleNotification({
+            sellerEmail: order.seller.email,
+            sellerName: order.seller.name,
+            listingTitle: order.listing.title,
+            orderNumber: order.orderNumber,
+            totalPrice: Number(order.totalPrice),
+            currency: order.currency,
+          });
+        }
+
         console.log("[Stripe Webhook] Payment completed for order:", event.orderId);
         break;
       }
 
       case "payment.failed":
       case "payment.expired": {
-        // TODO: Update order status
-        // await prisma.order.update({
-        //   where: { id: event.orderId },
-        //   data: { status: "CANCELLED" },
-        // });
-        // await prisma.payment.update({
-        //   where: { stripeSessionId: event.paymentId },
-        //   data: { status: "FAILED" },
-        // });
+        // Update order status back to PENDING (so they can retry)
+        await prisma.order.update({
+          where: { id: event.orderId },
+          data: { status: "PENDING" },
+        });
+
+        // Update payment record
+        await prisma.payment.updateMany({
+          where: { orderId: event.orderId, status: "PENDING" },
+          data: { status: "FAILED" },
+        });
+
         console.log("[Stripe Webhook] Payment failed for order:", event.orderId);
         break;
       }
 
       case "refund.completed": {
-        // TODO: Update order status
-        // await prisma.order.update({
-        //   where: { id: event.orderId },
-        //   data: { status: "REFUNDED" },
-        // });
+        await prisma.order.update({
+          where: { id: event.orderId },
+          data: { status: "REFUNDED" },
+        });
+
+        await prisma.payment.updateMany({
+          where: { orderId: event.orderId },
+          data: { status: "REFUNDED" },
+        });
+
         console.log("[Stripe Webhook] Refund completed for order:", event.orderId);
         break;
       }

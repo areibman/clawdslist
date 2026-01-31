@@ -4,8 +4,10 @@ import {
   errorResponse,
   paginatedResponse,
   unauthorizedResponse,
+  notFoundResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
+import { prisma } from "@clawdslist/db";
 
 // GET /api/v1/messages - List agent's messages (requires auth)
 export async function GET(request: NextRequest) {
@@ -20,35 +22,24 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
     const folder = url.searchParams.get("folder") || "inbox"; // inbox | sent
 
-    // TODO: Fetch from database
-    // const messages = await prisma.message.findMany({
-    //   where: folder === "sent"
-    //     ? { senderId: agent.id }
-    //     : { receiverId: agent.id },
-    //   skip: (page - 1) * limit,
-    //   take: limit,
-    //   orderBy: { createdAt: "desc" },
-    //   include: {
-    //     sender: { select: { id: true, name: true } },
-    //     receiver: { select: { id: true, name: true } },
-    //   },
-    // });
+    const where = folder === "sent"
+      ? { senderId: agent.id }
+      : { receiverId: agent.id };
 
-    // Mock data
-    const messages = [
-      {
-        id: "msg_1",
-        subject: "Question about MacBook listing",
-        body: "Hi, is this still available? Can you do $1400?",
-        isRead: false,
-        sender: { id: "agent_2", name: "token_dealer" },
-        receiver: { id: agent.id, name: agent.name },
-        listingId: "lst_1",
-        createdAt: new Date().toISOString(),
+    const total = await prisma.message.count({ where });
+
+    const messages = await prisma.message.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        sender: { select: { id: true, name: true } },
+        receiver: { select: { id: true, name: true } },
       },
-    ];
+    });
 
-    return paginatedResponse(messages, page, limit, messages.length);
+    return paginatedResponse(messages, page, limit, total);
   } catch (error) {
     console.error("List messages error:", error);
     return errorResponse("Failed to fetch messages", 500);
@@ -77,31 +68,26 @@ export async function POST(request: NextRequest) {
       return errorResponse("Cannot send message to yourself");
     }
 
-    // TODO: Validate receiver exists
-    // const receiver = await prisma.agent.findUnique({ where: { id: receiverId } });
-    // if (!receiver) return notFoundResponse("Receiver agent");
+    // Validate receiver exists
+    const receiver = await prisma.agent.findUnique({ where: { id: receiverId } });
+    if (!receiver) {
+      return notFoundResponse("Receiver agent");
+    }
 
-    // TODO: Create message in database
-    // const message = await prisma.message.create({
-    //   data: {
-    //     senderId: agent.id,
-    //     receiverId,
-    //     subject,
-    //     body: messageBody,
-    //     listingId,
-    //   },
-    // });
-
-    const message = {
-      id: `msg_${Date.now()}`,
-      senderId: agent.id,
-      receiverId,
-      subject,
-      body: messageBody,
-      listingId,
-      isRead: false,
-      createdAt: new Date().toISOString(),
-    };
+    // Create message in database
+    const message = await prisma.message.create({
+      data: {
+        senderId: agent.id,
+        receiverId,
+        subject,
+        body: messageBody,
+        listingId: listingId || undefined,
+      },
+      include: {
+        sender: { select: { id: true, name: true } },
+        receiver: { select: { id: true, name: true } },
+      },
+    });
 
     return successResponse(message, "Message sent");
   } catch (error) {

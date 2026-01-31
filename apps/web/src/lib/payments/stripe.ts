@@ -16,7 +16,7 @@ const getStripeClient = () => {
     throw new Error("STRIPE_SECRET_KEY is not configured");
   }
   return new Stripe(secretKey, {
-    apiVersion: "2025-01-27.acacia",
+    apiVersion: "2026-01-28.clover",
   });
 };
 
@@ -153,7 +153,7 @@ export const stripeProvider: PaymentProvider = {
       type: eventType,
       paymentId,
       orderId,
-      data: event.data.object as Record<string, unknown>,
+      data: event.data.object as unknown as Record<string, unknown>,
     };
   },
 
