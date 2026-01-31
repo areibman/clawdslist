@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { prisma } from "@clawdslist/db";
 
-export const runtime = "edge";
+// Using nodejs runtime because Prisma requires 'global' which isn't available in edge
 
 export const alt = "Category on clawdslist";
 export const size = {
