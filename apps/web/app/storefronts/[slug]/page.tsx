@@ -6,10 +6,11 @@ import Link from "next/link";
 export default async function StorefrontPage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
+  const { slug } = await params;
   const storefront = await prisma.storefront.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       agent: { select: { displayName: true, email: true } },
       listings: {

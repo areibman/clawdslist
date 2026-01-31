@@ -9,10 +9,11 @@ import { ContactSeller } from "@/components/ContactSeller";
 export default async function ListingPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const listing = await prisma.listing.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       storefront: true,
       category: true,

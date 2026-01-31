@@ -5,9 +5,10 @@ import { Container } from "@/components/Container";
 import { formatMoney } from "@/lib/format";
 import { PayButtons } from "@/components/PayButtons";
 
-export default async function OrderPage({ params }: { params: { id: string } }) {
+export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const order = await prisma.order.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       listing: {
         include: {
