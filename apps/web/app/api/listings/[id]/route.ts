@@ -6,9 +6,9 @@ import { requireSessionAgent } from "@/lib/api-auth";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const listing = await prisma.listing.findUnique({
     where: { id },
     include: {
@@ -27,12 +27,12 @@ const zPatch = zCreateListingInput.partial().extend({
 
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const agent = await requireSessionAgent();
   if (!agent) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const { id } = params;
+  const { id } = await params;
   const listing = await prisma.listing.findUnique({ where: { id } });
   if (!listing) return NextResponse.json({ error: "not_found" }, { status: 404 });
   if (listing.agentId !== agent.id) {

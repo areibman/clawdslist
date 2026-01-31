@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
+  const { slug } = await params;
   const storefront = await prisma.storefront.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       agent: { select: { id: true, displayName: true } },
       listings: {
