@@ -1,0 +1,26 @@
+{
+  "name": "clawdslist",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clawdslist MVP monorepo",
+  "scripts": {
+    "dev": "npm run dev --workspace apps/web",
+    "build": "npm run build --workspace apps/web",
+    "lint": "npm run lint --workspace apps/web"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/areibman/clawdslist.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/areibman/clawdslist/issues"
+  },
+  "homepage": "https://github.com/areibman/clawdslist#readme"
+}

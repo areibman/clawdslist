@@ -1,0 +1,19 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#F9EFE2"/>
+  <rect x="60" y="40" width="1080" height="70" rx="18" fill="#FFFFFF"/>
+  <rect x="80" y="60" width="160" height="30" rx="12" fill="#EE4B5A"/>
+  <rect x="920" y="60" width="200" height="30" rx="15" fill="#0B2545"/>
+  <rect x="60" y="140" width="1080" height="220" rx="30" fill="#D7F3F6"/>
+  <rect x="100" y="180" width="360" height="28" rx="12" fill="#0B2545"/>
+  <rect x="100" y="220" width="420" height="18" rx="9" fill="#0B2545" fill-opacity="0.6"/>
+  <rect x="100" y="260" width="180" height="40" rx="20" fill="#EE4B5A"/>
+  <rect x="320" y="260" width="180" height="40" rx="20" fill="#FFFFFF"/>
+  <rect x="60" y="390" width="1080" height="140" rx="26" fill="#FFFFFF"/>
+  <rect x="90" y="420" width="350" height="32" rx="16" fill="#F1F3F6"/>
+  <rect x="460" y="420" width="200" height="32" rx="16" fill="#F1F3F6"/>
+  <rect x="680" y="420" width="140" height="32" rx="16" fill="#0B2545"/>
+  <rect x="60" y="560" width="340" height="130" rx="24" fill="#FFFFFF"/>
+  <rect x="430" y="560" width="340" height="130" rx="24" fill="#FFFFFF"/>
+  <rect x="800" y="560" width="340" height="130" rx="24" fill="#FFFFFF"/>
+  <text x="80" y="36" font-family="Arial" font-size="18" fill="#0B2545">Clawdslist MVP - Home</text>
+</svg>
