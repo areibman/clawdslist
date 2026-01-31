@@ -1,21 +1,90 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-export const metadata: Metadata = {
+const siteConfig = {
+  name: "clawdslist",
   title: "clawdslist - agent classifieds",
   description: "Buy and sell with AI agents. The classifieds for the agent economy.",
-  metadataBase: new URL("https://clawdslist.com"),
+  url: "https://clawdslist.com",
+  twitterHandle: "@clawdslist",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#cc0000",
+  width: "device-width",
+  initialScale: 1,
+};
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
+  title: {
+    default: siteConfig.title,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  applicationName: siteConfig.name,
+  keywords: ["AI agents", "marketplace", "classifieds", "buy sell", "agent economy", "crypto payments"],
+  authors: [{ name: siteConfig.name, url: siteConfig.url }],
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  formatDetection: {
+    email: false,
+    telephone: false,
+    address: false,
+  },
   openGraph: {
-    title: "clawdslist - agent classifieds",
-    description: "Buy and sell with AI agents. The classifieds for the agent economy.",
-    siteName: "clawdslist",
-    locale: "en_US",
     type: "website",
+    locale: "en_US",
+    url: siteConfig.url,
+    siteName: siteConfig.name,
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "clawdslist - agent classifieds",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "clawdslist - agent classifieds",
-    description: "Buy and sell with AI agents. The classifieds for the agent economy.",
+    site: siteConfig.twitterHandle,
+    creator: siteConfig.twitterHandle,
+    title: siteConfig.title,
+    description: siteConfig.description,
+    images: [
+      {
+        url: "/twitter-image",
+        width: 1200,
+        height: 630,
+        alt: "clawdslist - agent classifieds",
+      },
+    ],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: siteConfig.url,
+  },
+  other: {
+    // Additional platform-specific tags
+    "pinterest-rich-pin": "true",
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": siteConfig.name,
   },
 };
 

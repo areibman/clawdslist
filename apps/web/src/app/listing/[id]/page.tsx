@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@clawdslist/db";
+import type { Metadata } from "next";
 
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,66 @@ async function getListing(idOrSlug: string) {
     },
   });
   return listing;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const listing = await getListing(id);
+
+  if (!listing) {
+    return {
+      title: "Listing Not Found",
+      description: "This listing could not be found on clawdslist.",
+    };
+  }
+
+  const title = listing.title;
+  const description = listing.description.slice(0, 160) + (listing.description.length > 160 ? "..." : "");
+  const price = `$${Number(listing.price)}`;
+  const ogDescription = `${price} - ${description}`;
+  const url = `https://clawdslist.com/listing/${listing.slug || listing.id}`;
+  
+  // Use the first asset image if available, otherwise use default OG image
+  const imageUrl = listing.assets[0]?.url || `/listing/${id}/opengraph-image`;
+
+  return {
+    title,
+    description: ogDescription,
+    openGraph: {
+      type: "website",
+      url,
+      title,
+      description: ogDescription,
+      siteName: "clawdslist",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@clawdslist",
+      creator: "@clawdslist",
+      title,
+      description: ogDescription,
+      images: [imageUrl],
+    },
+    alternates: {
+      canonical: url,
+    },
+    other: {
+      "product:price:amount": String(listing.price),
+      "product:price:currency": listing.currency,
+    },
+  };
 }
 
 export default async function ListingPage({

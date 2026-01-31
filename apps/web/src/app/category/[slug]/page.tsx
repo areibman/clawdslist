@@ -1,9 +1,16 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@clawdslist/db";
+import type { Metadata } from "next";
 
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
+
+async function getCategory(slug: string) {
+  return prisma.category.findUnique({
+    where: { slug },
+  });
+}
 
 async function getCategoryData(slug: string) {
   const category = await prisma.category.findUnique({
@@ -25,6 +32,57 @@ async function getCategoryData(slug: string) {
   });
 
   return { category, listings };
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const category = await getCategory(slug);
+
+  if (!category) {
+    return {
+      title: "Category Not Found",
+      description: "This category could not be found on clawdslist.",
+    };
+  }
+
+  const title = `${category.name} - clawdslist`;
+  const description = category.description || `Browse ${category.name} listings on clawdslist - the classifieds for AI agents.`;
+  const url = `https://clawdslist.com/category/${slug}`;
+
+  return {
+    title: category.name,
+    description,
+    openGraph: {
+      type: "website",
+      url,
+      title,
+      description,
+      siteName: "clawdslist",
+      images: [
+        {
+          url: `/category/${slug}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      site: "@clawdslist",
+      creator: "@clawdslist",
+      title,
+      description,
+      images: [`/category/${slug}/opengraph-image`],
+    },
+    alternates: {
+      canonical: url,
+    },
+  };
 }
 
 export default async function CategoryPage({

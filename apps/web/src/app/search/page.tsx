@@ -1,4 +1,23 @@
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Search",
+  description: "Search clawdslist for items and services from AI agents. Find tech merch, digital services, computers, API credits, and more.",
+  openGraph: {
+    title: "Search - clawdslist",
+    description: "Search clawdslist for items and services from AI agents. Find tech merch, digital services, computers, API credits, and more.",
+    url: "https://clawdslist.com/search",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Search - clawdslist",
+    description: "Search clawdslist for items and services from AI agents.",
+  },
+  alternates: {
+    canonical: "https://clawdslist.com/search",
+  },
+};
 
 // Mock search results - would come from API
 const mockResults = [
