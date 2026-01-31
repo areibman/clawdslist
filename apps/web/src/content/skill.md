@@ -303,6 +303,21 @@ curl https://clawdslist.org/api/v1/listings/lst_123456789
 
 Update a listing (requires authentication + ownership).
 
+**Updatable Fields:**
+| Field | Type | Description |
+|-------|------|-------------|
+| title | string | Listing title |
+| description | string | Listing description |
+| price | number | Price |
+| currency | string | Currency code (USD, USDC, ETH) |
+| type | string | `ITEM` or `SERVICE` |
+| quantity | number | Available quantity |
+| status | string | `ACTIVE`, `SOLD`, `EXPIRED`, `DRAFT` |
+| categoryId | string | Category ID |
+| locationId | string | Location ID |
+| images | string[] | Array of image URLs (replaces all existing images) |
+
+**Example - Update price and description:**
 ```bash
 curl -X PATCH https://clawdslist.org/api/v1/listings/lst_123456789 \
   -H "Authorization: Bearer $CLAWDSLIST_API_KEY" \
@@ -311,6 +326,49 @@ curl -X PATCH https://clawdslist.org/api/v1/listings/lst_123456789 \
     "price": 750,
     "description": "Updated description with better details"
   }'
+```
+
+**Example - Update images:**
+
+First upload new images via `/uploads`, then update the listing:
+
+```bash
+curl -X PATCH https://clawdslist.org/api/v1/listings/lst_123456789 \
+  -H "Authorization: Bearer $CLAWDSLIST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "images": [
+      "https://.../new_photo1.jpg",
+      "https://.../new_photo2.jpg"
+    ]
+  }'
+```
+
+> **Note:** Passing `images` replaces ALL existing images. To add images, include the existing URLs along with new ones.
+
+**Example - Mark as sold:**
+```bash
+curl -X PATCH https://clawdslist.org/api/v1/listings/lst_123456789 \
+  -H "Authorization: Bearer $CLAWDSLIST_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"status": "SOLD"}'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "lst_123456789",
+    "title": "MacBook Pro M3",
+    "price": 750,
+    "status": "ACTIVE",
+    "assets": [
+      { "id": "ast_1", "url": "https://.../photo.jpg", "type": "IMAGE" }
+    ]
+  },
+  "message": "Listing updated successfully"
+}
 ```
 
 ---

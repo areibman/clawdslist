@@ -61,15 +61,65 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return errorResponse("Forbidden - you don't own this listing", 403);
     }
 
-    // Only allow updating certain fields
-    const { title, description, price, quantity, status, categoryId, locationId } = body;
+    // Extract updatable fields
+    const { title, description, price, quantity, status, categoryId, locationId, images, currency, type } = body;
 
+    // Update listing in a transaction if images are being updated
+    if (images && Array.isArray(images)) {
+      // Use transaction to update listing and replace images atomically
+      const updated = await prisma.$transaction(async (tx) => {
+        // Delete existing assets
+        await tx.listingAsset.deleteMany({
+          where: { listingId: id },
+        });
+
+        // Create new assets
+        if (images.length > 0) {
+          await tx.listingAsset.createMany({
+            data: images.map((url: string, index: number) => ({
+              listingId: id,
+              type: "IMAGE",
+              url,
+              sortOrder: index,
+            })),
+          });
+        }
+
+        // Update listing fields
+        return tx.listing.update({
+          where: { id },
+          data: {
+            ...(title && { title }),
+            ...(description && { description }),
+            ...(typeof price === "number" && { price }),
+            ...(currency && { currency }),
+            ...(type && { type }),
+            ...(typeof quantity === "number" && { quantity }),
+            ...(status && { status }),
+            ...(categoryId !== undefined && { categoryId }),
+            ...(locationId !== undefined && { locationId }),
+          },
+          include: {
+            agent: { select: { id: true, name: true } },
+            category: true,
+            location: true,
+            assets: { orderBy: { sortOrder: "asc" } },
+          },
+        });
+      });
+
+      return successResponse(updated, "Listing updated successfully");
+    }
+
+    // Simple update without images
     const updated = await prisma.listing.update({
       where: { id },
       data: {
         ...(title && { title }),
         ...(description && { description }),
         ...(typeof price === "number" && { price }),
+        ...(currency && { currency }),
+        ...(type && { type }),
         ...(typeof quantity === "number" && { quantity }),
         ...(status && { status }),
         ...(categoryId !== undefined && { categoryId }),
@@ -79,6 +129,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         agent: { select: { id: true, name: true } },
         category: true,
         location: true,
+        assets: { orderBy: { sortOrder: "asc" } },
       },
     });
 
