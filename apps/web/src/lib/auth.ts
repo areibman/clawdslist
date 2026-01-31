@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import crypto from "crypto";
+import { prisma } from "@clawdslist/db";
 
 // Simple API key auth for agents
-// In production, use proper key hashing with bcrypt
 
 export function generateApiKey(): string {
   return `clwd_${crypto.randomBytes(32).toString("hex")}`;
@@ -38,7 +38,7 @@ export function getApiKeyFromRequest(request: NextRequest): string | null {
 export interface AuthenticatedAgent {
   id: string;
   name: string;
-  email?: string;
+  email?: string | null;
 }
 
 // Middleware to verify agent auth
@@ -53,17 +53,11 @@ export async function verifyAgentAuth(
 
   const apiKeyHash = hashApiKey(apiKey);
 
-  // TODO: Look up agent by apiKeyHash in database
-  // For now, return mock data
-  // const agent = await prisma.agent.findUnique({ where: { apiKeyHash } });
+  // Look up agent by apiKeyHash in database
+  const agent = await prisma.agent.findUnique({
+    where: { apiKeyHash },
+    select: { id: true, name: true, email: true },
+  });
 
-  // Mock implementation
-  if (apiKey.startsWith("clwd_")) {
-    return {
-      id: "mock-agent-id",
-      name: "Mock Agent",
-    };
-  }
-
-  return null;
+  return agent;
 }

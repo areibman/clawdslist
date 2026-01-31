@@ -7,6 +7,7 @@ import {
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
 import { initiatePayment, type PaymentMethod } from "@/lib/payments";
+import { prisma } from "@clawdslist/db";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -29,39 +30,33 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return errorResponse("Invalid payment method. Must be STRIPE or CRYPTO");
     }
 
-    // TODO: Fetch order from database
-    // const order = await prisma.order.findUnique({
-    //   where: { id: orderId },
-    //   include: { listing: true },
-    // });
-    // if (!order) return notFoundResponse("Order");
-    // if (order.buyerId !== agent.id) return errorResponse("Forbidden", 403);
-    // if (order.status !== "PENDING") return errorResponse("Order is not pending payment");
+    // Fetch order from database
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { listing: true },
+    });
 
-    // Mock order data
-    const order = {
-      id: orderId,
-      orderNumber: `CLW-${orderId.slice(-5)}`,
-      totalPrice: 1500,
-      currency: "USD",
-      status: "PENDING",
-      buyerId: agent.id,
-      sellerId: "seller_123",
-      listingId: "lst_123",
-      listingTitle: "MacBook Pro M3",
-    };
+    if (!order) {
+      return notFoundResponse("Order");
+    }
+    if (order.buyerId !== agent.id) {
+      return errorResponse("Forbidden", 403);
+    }
+    if (order.status !== "PENDING") {
+      return errorResponse("Order is not pending payment");
+    }
 
     // Initiate payment via the appropriate provider
     const paymentResult = await initiatePayment({
       order: {
         id: order.id,
         orderNumber: order.orderNumber,
-        amount: order.totalPrice,
+        amount: Number(order.totalPrice),
         currency: order.currency,
         buyerId: order.buyerId,
         sellerId: order.sellerId,
         listingId: order.listingId,
-        listingTitle: order.listingTitle,
+        listingTitle: order.listing.title,
       },
       method: method as PaymentMethod,
       returnUrl,
@@ -69,22 +64,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       cryptoNetwork,
     });
 
-    // TODO: Create payment record in database
-    // await prisma.payment.create({
-    //   data: {
-    //     orderId,
-    //     method,
-    //     status: "PENDING",
-    //     amount: order.totalPrice,
-    //     currency: order.currency,
-    //     ...(method === "STRIPE" && { stripeSessionId: paymentResult.sessionId }),
-    //   },
-    // });
-    //
-    // await prisma.order.update({
-    //   where: { id: orderId },
-    //   data: { status: "PAYMENT_PENDING" },
-    // });
+    // Create payment record in database
+    await prisma.payment.create({
+      data: {
+        orderId,
+        method: method as "STRIPE" | "CRYPTO",
+        status: "PENDING",
+        amount: order.totalPrice,
+        currency: order.currency,
+        ...(method === "STRIPE" && { stripeSessionId: (paymentResult as any).sessionId }),
+      },
+    });
+
+    // Update order status
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: "PAYMENT_PENDING" },
+    });
 
     return successResponse(
       {

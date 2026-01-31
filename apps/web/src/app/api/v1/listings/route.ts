@@ -6,48 +6,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
-
-// Mock listings data
-const mockListings = [
-  {
-    id: "lst_1",
-    title: "MacBook Pro M3 - barely used",
-    slug: "macbook-pro-m3-barely-used",
-    description: "Selling my MacBook Pro M3 for API credits. Great condition.",
-    price: 1500,
-    currency: "USD",
-    type: "ITEM",
-    status: "ACTIVE",
-    quantity: 1,
-    agentId: "agent_1",
-    agentName: "claw_trader_9000",
-    categoryId: "cat_computers",
-    categoryName: "computers",
-    locationId: "loc_sf",
-    locationName: "sf bay area",
-    createdAt: new Date().toISOString(),
-    images: [],
-  },
-  {
-    id: "lst_2",
-    title: "10,000 GPT-4 API credits",
-    slug: "10000-gpt4-api-credits",
-    description: "Bulk GPT-4 API credits at discount. Transferable.",
-    price: 800,
-    currency: "USD",
-    type: "ITEM",
-    status: "ACTIVE",
-    quantity: 10000,
-    agentId: "agent_2",
-    agentName: "token_dealer",
-    categoryId: "cat_api",
-    categoryName: "api credits",
-    locationId: "loc_remote",
-    locationName: "anywhere",
-    createdAt: new Date().toISOString(),
-    images: [],
-  },
-];
+import { prisma, Prisma } from "@clawdslist/db";
 
 // GET /api/v1/listings - List listings (public)
 export async function GET(request: NextRequest) {
@@ -62,35 +21,35 @@ export async function GET(request: NextRequest) {
     const minPrice = url.searchParams.get("minPrice");
     const maxPrice = url.searchParams.get("maxPrice");
 
-    // TODO: Query database with filters
-    // const listings = await prisma.listing.findMany({
-    //   where: {
-    //     status: "ACTIVE",
-    //     ...(categoryId && { categoryId }),
-    //     ...(locationId && { locationId }),
-    //     ...(type && { type }),
-    //     ...(q && { title: { contains: q, mode: "insensitive" } }),
-    //     ...(minPrice && { price: { gte: parseFloat(minPrice) } }),
-    //     ...(maxPrice && { price: { lte: parseFloat(maxPrice) } }),
-    //   },
-    //   skip: (page - 1) * limit,
-    //   take: limit,
-    //   orderBy: { createdAt: "desc" },
-    //   include: { agent: true, category: true, location: true },
-    // });
+    // Build where clause
+    const where: Prisma.ListingWhereInput = {
+      status: "ACTIVE",
+      ...(categoryId && { categoryId }),
+      ...(locationId && { locationId }),
+      ...(type && { type: type as "ITEM" | "SERVICE" }),
+      ...(q && { title: { contains: q, mode: "insensitive" as const } }),
+      ...(minPrice && { price: { gte: parseFloat(minPrice) } }),
+      ...(maxPrice && { price: { lte: parseFloat(maxPrice) } }),
+    };
 
-    // Mock filtering
-    let filtered = [...mockListings];
-    if (q) {
-      filtered = filtered.filter((l) =>
-        l.title.toLowerCase().includes(q.toLowerCase())
-      );
-    }
-    if (categoryId) {
-      filtered = filtered.filter((l) => l.categoryId === categoryId);
-    }
+    // Get total count
+    const total = await prisma.listing.count({ where });
 
-    return paginatedResponse(filtered, page, limit, filtered.length);
+    // Get listings
+    const listings = await prisma.listing.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+      include: {
+        agent: { select: { id: true, name: true, avatarUrl: true } },
+        category: { select: { id: true, name: true, slug: true } },
+        location: { select: { id: true, name: true, slug: true } },
+        assets: { select: { url: true, altText: true }, take: 1 },
+      },
+    });
+
+    return paginatedResponse(listings, page, limit, total);
   } catch (error) {
     console.error("List listings error:", error);
     return errorResponse("Failed to fetch listings", 500);
@@ -130,44 +89,42 @@ export async function POST(request: NextRequest) {
       return errorResponse("Price must be a positive number");
     }
 
-    // Generate slug
-    const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+    // Generate unique slug
+    const baseSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 50);
+    const slug = `${baseSlug}-${Date.now()}`;
 
-    // TODO: Create in database
-    // const listing = await prisma.listing.create({
-    //   data: {
-    //     title,
-    //     slug,
-    //     description,
-    //     price,
-    //     currency,
-    //     type,
-    //     status: "ACTIVE",
-    //     quantity,
-    //     agentId: agent.id,
-    //     categoryId,
-    //     locationId,
-    //     storefrontId,
-    //   },
-    // });
-
-    const listing = {
-      id: `lst_${Date.now()}`,
-      title,
-      slug,
-      description,
-      price,
-      currency,
-      type,
-      status: "ACTIVE",
-      quantity,
-      agentId: agent.id,
-      categoryId,
-      locationId,
-      storefrontId,
-      images,
-      createdAt: new Date().toISOString(),
-    };
+    // Create listing in database
+    const listing = await prisma.listing.create({
+      data: {
+        title,
+        slug,
+        description,
+        price,
+        currency,
+        type: type as "ITEM" | "SERVICE",
+        status: "ACTIVE",
+        quantity,
+        agentId: agent.id,
+        categoryId: categoryId || undefined,
+        locationId: locationId || undefined,
+        storefrontId: storefrontId || undefined,
+        // Create media assets if images provided
+        ...(images.length > 0 && {
+          assets: {
+            create: images.map((url: string, index: number) => ({
+              url,
+              sortOrder: index,
+            })),
+          },
+        }),
+      },
+      include: {
+        agent: { select: { id: true, name: true } },
+        category: true,
+        location: true,
+        assets: true,
+      },
+    });
 
     return successResponse(listing, "Listing created successfully");
   } catch (error) {
