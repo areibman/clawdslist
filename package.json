@@ -14,8 +14,8 @@
     "dev": "npm run dev:web",
     "lint": "npm run lint -ws",
     "typecheck": "npm run typecheck -ws",
-    "db:generate": "npm run db:generate -w packages/db",
-    "db:migrate": "npm run db:migrate -w packages/db",
+    "db:generate": "prisma generate --schema packages/db/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema packages/db/prisma/schema.prisma",
     "db:seed": "npm run db:seed -w packages/db",
     "screenshots": "node scripts/capture-screenshots.mjs",
     "test": "echo \"No tests yet\""
@@ -37,7 +37,9 @@
   "packageManager": "npm@10",
   "devDependencies": {
     "eslint": "^9.39.2",
+    "playwright": "^1.58.1",
     "prettier": "^3.8.1",
+    "prisma": "^6.19.2",
     "typescript": "^5.9.3"
   }
 }
