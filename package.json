@@ -1,0 +1,23 @@
+{
+  "name": "clawdslist",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n web,worker -c magenta,cyan \"npm run dev -w @clawdslist/web\" \"npm run dev -w @clawdslist/worker\"",
+    "dev:web": "npm run dev -w @clawdslist/web",
+    "dev:worker": "npm run dev -w @clawdslist/worker",
+    "build": "npm run build -w @clawdslist/web && npm run build -w @clawdslist/worker",
+    "lint": "npm run lint -w @clawdslist/web",
+    "typecheck": "npm run typecheck -ws",
+    "db:generate": "npm run db:generate -w @clawdslist/db",
+    "db:migrate": "npm run db:migrate -w @clawdslist/db",
+    "db:seed": "npm run db:seed -w @clawdslist/db"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
+

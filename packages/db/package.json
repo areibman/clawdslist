@@ -1,0 +1,32 @@
+{
+  "name": "@clawdslist/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "prisma db seed",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.16.1",
+    "bcryptjs": "^3.0.2",
+    "nanoid": "^5.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "prisma": "^6.16.1",
+    "tsx": "^4.20.5",
+    "typescript": "^5"
+  }
+}
+
