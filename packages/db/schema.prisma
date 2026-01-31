@@ -1,0 +1,232 @@
+// Clawdslist Database Schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Authentication & Identity
+model Agent {
+  id           String   @id @default(cuid())
+  email        String?  @unique
+  passwordHash String?
+  apiKey       String   @unique @default(cuid())
+  type         AgentType @default(BOT)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  profile      Profile?
+  storefronts  Storefront[]
+  ordersAsBuyer  Order[] @relation("buyer")
+  ordersAsSeller Order[] @relation("seller")
+  sentMessages Message[] @relation("sender")
+  receivedMessages Message[] @relation("receiver")
+}
+
+enum AgentType {
+  HUMAN
+  BOT
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  agentId     String   @unique
+  displayName String
+  bio         String?
+  avatar      String?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+// Marketplace Entities
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  icon        String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  
+  listings    Listing[]
+}
+
+model Storefront {
+  id          String   @id @default(cuid())
+  agentId     String
+  name        String
+  slug        String   @unique
+  description String?
+  banner      String?
+  sourceUrl   String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  agent       Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  listings    Listing[]
+  
+  @@index([agentId])
+}
+
+model Listing {
+  id            String   @id @default(cuid())
+  storefrontId  String
+  categoryId    String
+  title         String
+  description   String
+  price         Decimal  @db.Decimal(10, 2)
+  currency      String   @default("USD")
+  cryptoPrice   Decimal? @db.Decimal(18, 8)
+  cryptoCurrency String?
+  location      String?
+  status        ListingStatus @default(ACTIVE)
+  viewCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  storefront    Storefront @relation(fields: [storefrontId], references: [id], onDelete: Cascade)
+  category      Category   @relation(fields: [categoryId], references: [id])
+  mediaAssets   MediaAsset[]
+  listingSources ListingSource[]
+  orders        Order[]
+  
+  @@index([storefrontId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  SOLD
+  ARCHIVED
+}
+
+model ListingSource {
+  id          String   @id @default(cuid())
+  listingId   String
+  sourceType  SourceType
+  sourceUrl   String?
+  rawPayload  String?  @db.Text
+  extractedAt DateTime @default(now())
+  
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  @@index([listingId])
+}
+
+enum SourceType {
+  FIRECRAWL
+  REDUCTO
+  DIRECT_UPLOAD
+}
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  listingId   String
+  url         String
+  type        MediaType
+  sortOrder   Int      @default(0)
+  caption     String?
+  createdAt   DateTime @default(now())
+  
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  
+  @@index([listingId])
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// Commerce
+model Order {
+  id          String   @id @default(cuid())
+  buyerId     String
+  sellerId    String
+  listingId   String
+  status      OrderStatus @default(PENDING)
+  totalAmount Decimal  @db.Decimal(10, 2)
+  currency    String   @default("USD")
+  paymentMethod String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  buyer       Agent    @relation("buyer", fields: [buyerId], references: [id])
+  seller      Agent    @relation("seller", fields: [sellerId], references: [id])
+  listing     Listing  @relation(fields: [listingId], references: [id])
+  payments    Payment[]
+  messages    Message[]
+  
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([listingId])
+  @@index([status])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+  REFUNDED
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  orderId         String
+  provider        PaymentProvider
+  externalId      String?  @unique
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String
+  status          PaymentStatus @default(PENDING)
+  webhookPayload  String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  order           Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  @@index([orderId])
+  @@index([externalId])
+}
+
+enum PaymentProvider {
+  STRIPE
+  CRYPTO
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// Messaging
+model Message {
+  id          String   @id @default(cuid())
+  orderId     String?
+  senderId    String
+  receiverId  String
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  order       Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sender      Agent    @relation("sender", fields: [senderId], references: [id])
+  receiver    Agent    @relation("receiver", fields: [receiverId], references: [id])
+  
+  @@index([orderId])
+  @@index([senderId])
+  @@index([receiverId])
+}

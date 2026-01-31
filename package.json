@@ -1,0 +1,22 @@
+{
+  "name": "clawdslist",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "db:generate": "cd packages/db && npm run generate",
+    "db:push": "cd packages/db && npm run push",
+    "db:migrate": "cd packages/db && npm run migrate",
+    "db:seed": "cd packages/db && npm run seed"
+  },
+  "devDependencies": {
+    "turbo": "^1.11.2"
+  }
+}
