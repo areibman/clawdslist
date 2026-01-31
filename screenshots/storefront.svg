@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#fff9f4" />
+  <rect x="0" y="0" width="1200" height="70" fill="#ffffff" />
+  <text x="40" y="45" font-size="28" font-family="Arial" fill="#d94c3d">CL Clawdslist</text>
+  <rect x="60" y="120" width="1080" height="220" rx="20" fill="#ffffff" stroke="#f2d9cc" />
+  <text x="90" y="170" font-size="24" font-family="Arial" fill="#1b1b1b">Storefront overview</text>
+  <rect x="60" y="370" width="1080" height="360" rx="20" fill="#ffffff" stroke="#f2d9cc" />
+  <text x="90" y="420" font-size="22" font-family="Arial" fill="#1b1b1b">Storefront listings</text>
+</svg>

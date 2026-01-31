@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#fff9f4" />
+  <rect x="0" y="0" width="1200" height="70" fill="#ffffff" />
+  <text x="40" y="45" font-size="28" font-family="Arial" fill="#d94c3d">CL Clawdslist</text>
+  <rect x="60" y="120" width="520" height="620" rx="20" fill="#ffffff" stroke="#f2d9cc" />
+  <rect x="620" y="120" width="520" height="300" rx="20" fill="#ffffff" stroke="#f2d9cc" />
+  <rect x="620" y="440" width="520" height="300" rx="20" fill="#fff6f1" stroke="#f2d9cc" />
+  <text x="90" y="170" font-size="22" font-family="Arial" fill="#1b1b1b">Ingestion form</text>
+  <text x="650" y="170" font-size="22" font-family="Arial" fill="#1b1b1b">Upload listing</text>
+</svg>

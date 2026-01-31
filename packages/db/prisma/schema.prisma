@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentType {
+  HUMAN
+  BOT
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  SOLD
+}
+
+enum IngestionStatus {
+  PENDING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+enum PaymentProvider {
+  STRIPE
+  COINBASE
+}
+
+enum PaymentStatus {
+  PENDING
+  REQUIRES_ACTION
+  SUCCEEDED
+  FAILED
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELED
+}
+
+enum CurrencyCode {
+  USD
+  USDC
+  ETH
+}
+
+model Agent {
+  id             String      @id @default(cuid())
+  type           AgentType
+  name           String
+  email          String?
+  apiKeyHash     String?
+  apiKeyLastFour String?
+  profile        Profile?
+  storefronts    Storefront[]
+  orders         Order[]     @relation("AgentOrders")
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  agent       Agent    @relation(fields: [agentId], references: [id])
+  agentId     String   @unique
+  displayName String
+  avatarUrl   String?
+  bio         String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Storefront {
+  id           String          @id @default(cuid())
+  slug         String          @unique
+  name         String
+  headline     String?
+  description  String?
+  heroImageUrl String?
+  agent        Agent           @relation(fields: [agentId], references: [id])
+  agentId      String
+  location     Location?       @relation(fields: [locationId], references: [id])
+  locationId   String?
+  listings     Listing[]
+  listingSources ListingSource[]
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  listings    Listing[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Location {
+  id        String       @id @default(cuid())
+  city      String
+  region    String?
+  country   String
+  latitude  Float?
+  longitude Float?
+  storefronts Storefront[]
+  listings  Listing[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([city, country], name: "city_country")
+}
+
+model Listing {
+  id             String         @id @default(cuid())
+  storefront     Storefront     @relation(fields: [storefrontId], references: [id])
+  storefrontId   String
+  title          String
+  description    String
+  priceFiatCents Int?
+  priceCrypto    Decimal?       @db.Decimal(18, 8)
+  currency       CurrencyCode
+  status         ListingStatus
+  category       Category?      @relation(fields: [categoryId], references: [id])
+  categoryId     String?
+  location       Location?      @relation(fields: [locationId], references: [id])
+  locationId     String?
+  media          MediaAsset[]
+  orders         Order[]
+  messages       Message[]
+  listingSource  ListingSource?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model ListingSource {
+  id           String          @id @default(cuid())
+  storefront   Storefront      @relation(fields: [storefrontId], references: [id])
+  storefrontId String
+  listing      Listing?        @relation(fields: [listingId], references: [id])
+  listingId    String?
+  sourceUrl    String
+  status       IngestionStatus
+  rawPayload   Json?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+}
+
+model MediaAsset {
+  id        String    @id @default(cuid())
+  listing   Listing   @relation(fields: [listingId], references: [id])
+  listingId String
+  type      MediaType
+  url       String
+  alt       String?
+  createdAt DateTime  @default(now())
+}
+
+model Order {
+  id            String     @id @default(cuid())
+  listing       Listing    @relation(fields: [listingId], references: [id])
+  listingId     String
+  buyerName     String?
+  buyerEmail    String?
+  buyerAgent    Agent?     @relation("AgentOrders", fields: [buyerAgentId], references: [id])
+  buyerAgentId  String?
+  status        OrderStatus
+  totalFiatCents Int?
+  totalCrypto   Decimal?   @db.Decimal(18, 8)
+  currency      CurrencyCode
+  payments      Payment[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Payment {
+  id               String          @id @default(cuid())
+  order            Order           @relation(fields: [orderId], references: [id])
+  orderId          String
+  provider         PaymentProvider
+  providerReference String?
+  status           PaymentStatus
+  amountFiatCents  Int?
+  amountCrypto     Decimal?        @db.Decimal(18, 8)
+  currency         CurrencyCode
+  createdAt        DateTime        @default(now())
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  listingId String
+  fromName  String
+  fromEmail String?
+  body      String
+  createdAt DateTime @default(now())
+}

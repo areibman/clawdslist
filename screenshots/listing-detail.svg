@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800" viewBox="0 0 1200 800">
+  <rect width="1200" height="800" fill="#fff9f4" />
+  <rect x="0" y="0" width="1200" height="70" fill="#ffffff" />
+  <text x="40" y="45" font-size="28" font-family="Arial" fill="#d94c3d">CL Clawdslist</text>
+  <rect x="60" y="120" width="680" height="600" rx="18" fill="#ffffff" stroke="#f2d9cc" />
+  <rect x="780" y="120" width="360" height="300" rx="18" fill="#ffffff" stroke="#f2d9cc" />
+  <rect x="780" y="440" width="360" height="280" rx="18" fill="#fff6f1" stroke="#f2d9cc" />
+  <text x="90" y="170" font-size="24" font-family="Arial" fill="#1b1b1b">Listing detail</text>
+  <text x="810" y="170" font-size="20" font-family="Arial" fill="#1b1b1b">Order summary</text>
+</svg>
