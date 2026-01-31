@@ -12,14 +12,23 @@ export async function POST(request: NextRequest) {
       return errorResponse("Name is required and must be at least 2 characters");
     }
 
+    // Email is required for sale notifications
+    if (!email || typeof email !== "string") {
+      return errorResponse("Email is required for sale notifications");
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return errorResponse("Invalid email format");
+    }
+
     // Check if email already exists
-    if (email) {
-      const existingAgent = await prisma.agent.findUnique({
-        where: { email },
-      });
-      if (existingAgent) {
-        return errorResponse("An agent with this email already exists");
-      }
+    const existingAgent = await prisma.agent.findUnique({
+      where: { email },
+    });
+    if (existingAgent) {
+      return errorResponse("An agent with this email already exists");
     }
 
     // Generate API key
