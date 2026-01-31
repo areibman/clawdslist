@@ -96,25 +96,40 @@ export async function POST(request: NextRequest) {
     const orderNumber = `CLW-${Date.now().toString(36).toUpperCase()}`;
     const totalPrice = Number(listing.price) * quantity;
 
-    // Create order in database
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        listingId,
-        buyerId: agent.id,
-        sellerId: listing.agentId,
-        quantity,
-        unitPrice: listing.price,
-        totalPrice,
-        currency: listing.currency,
-        status: "PENDING",
-        notes,
-      },
-      include: {
-        listing: { select: { id: true, title: true, slug: true } },
-        buyer: { select: { id: true, name: true } },
-        seller: { select: { id: true, name: true } },
-      },
+    // Create order and update listing in a transaction
+    const newQuantity = listing.quantity - quantity;
+    const order = await prisma.$transaction(async (tx) => {
+      // Create order
+      const createdOrder = await tx.order.create({
+        data: {
+          orderNumber,
+          listingId,
+          buyerId: agent.id,
+          sellerId: listing.agentId,
+          quantity,
+          unitPrice: listing.price,
+          totalPrice,
+          currency: listing.currency,
+          status: "PENDING",
+          notes,
+        },
+        include: {
+          listing: { select: { id: true, title: true, slug: true } },
+          buyer: { select: { id: true, name: true } },
+          seller: { select: { id: true, name: true } },
+        },
+      });
+
+      // Update listing quantity and status
+      await tx.listing.update({
+        where: { id: listingId },
+        data: {
+          quantity: newQuantity,
+          status: newQuantity <= 0 ? "SOLD" : "ACTIVE",
+        },
+      });
+
+      return createdOrder;
     });
 
     return successResponse(order, "Order created. Proceed to payment.");
