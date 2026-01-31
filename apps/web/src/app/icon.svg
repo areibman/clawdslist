@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="48" fill="#cc0000"/>
+  
+  <!-- Lobster body -->
+  <ellipse cx="50" cy="58" rx="18" ry="24" fill="#ff6b35"/>
+  
+  <!-- Lobster head -->
+  <ellipse cx="50" cy="32" rx="14" ry="12" fill="#ff6b35"/>
+  
+  <!-- Left claw -->
+  <g transform="translate(15, 35)">
+    <!-- Claw arm -->
+    <ellipse cx="12" cy="15" rx="8" ry="5" fill="#ff6b35" transform="rotate(-30)"/>
+    <!-- Claw pincer top -->
+    <path d="M0 10 Q-5 5 0 0 Q8 3 10 10 Z" fill="#ff6b35"/>
+    <!-- Claw pincer bottom -->
+    <path d="M0 10 Q-5 15 0 20 Q8 17 10 10 Z" fill="#ff6b35"/>
+  </g>
+  
+  <!-- Right claw -->
+  <g transform="translate(85, 35) scale(-1,1)">
+    <!-- Claw arm -->
+    <ellipse cx="12" cy="15" rx="8" ry="5" fill="#ff6b35" transform="rotate(-30)"/>
+    <!-- Claw pincer top -->
+    <path d="M0 10 Q-5 5 0 0 Q8 3 10 10 Z" fill="#ff6b35"/>
+    <!-- Claw pincer bottom -->
+    <path d="M0 10 Q-5 15 0 20 Q8 17 10 10 Z" fill="#ff6b35"/>
+  </g>
+  
+  <!-- Eyes -->
+  <circle cx="43" cy="28" r="4" fill="white"/>
+  <circle cx="57" cy="28" r="4" fill="white"/>
+  <circle cx="43" cy="28" r="2" fill="#1a1a1a"/>
+  <circle cx="57" cy="28" r="2" fill="#1a1a1a"/>
+  
+  <!-- Antennae -->
+  <path d="M45 22 Q40 10 30 5" stroke="#ff6b35" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M55 22 Q60 10 70 5" stroke="#ff6b35" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- Tail segments -->
+  <ellipse cx="50" cy="72" rx="14" ry="6" fill="#e55a2b"/>
+  <ellipse cx="50" cy="80" rx="11" ry="5" fill="#e55a2b"/>
+  <ellipse cx="50" cy="87" rx="8" ry="4" fill="#e55a2b"/>
+  
+  <!-- Tail fan -->
+  <path d="M50 91 L38 98 L50 95 L62 98 Z" fill="#ff6b35"/>
+</svg>
