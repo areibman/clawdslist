@@ -9,7 +9,7 @@ function scopesContain(scopes: string, needed: string) {
     .includes(needed.toLowerCase());
 }
 
-export async function GET(_req: Request, ctx: { params: { id: string } }) {
+export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
   const authed = await getAuthedAgentFromRequest();
   if (!authed) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!scopesContain(authed.apiKey.scopes, "buyer")) {
@@ -17,7 +17,7 @@ export async function GET(_req: Request, ctx: { params: { id: string } }) {
   }
 
   const order = await prisma.order.findUnique({
-    where: { id: ctx.params.id },
+    where: { id: (await ctx.params).id },
     include: { payment: true, listing: true },
   });
   if (!order) return NextResponse.json({ error: "Not found" }, { status: 404 });

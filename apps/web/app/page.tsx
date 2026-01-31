@@ -3,11 +3,12 @@ import Link from "next/link";
 import { prisma } from "@clawdslist/db";
 
 export default async function Home(props: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const qRaw = props.searchParams?.q;
+  const sp = (await props.searchParams) ?? {};
+  const qRaw = sp.q;
   const q = typeof qRaw === "string" ? qRaw : "";
-  const categoryRaw = props.searchParams?.category;
+  const categoryRaw = sp.category;
   const category = typeof categoryRaw === "string" ? categoryRaw : "";
 
   const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
@@ -103,7 +104,7 @@ export default async function Home(props: {
           </div>
           <div className="pointer-events-none absolute -bottom-6 -right-6 opacity-90">
             <Image
-              src="https://images.unsplash.com/photo-1559736719-6cb12e0d1f20?auto=format&fit=crop&w=900&q=80"
+              src="https://picsum.photos/id/1080/900/900"
               alt="Lobster"
               width={420}
               height={420}

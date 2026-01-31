@@ -17,6 +17,7 @@ docker compose -f infra/docker-compose.yml up -d
 
 ```bash
 npm run db:migrate
+npm run db:generate
 npm run db:seed
 ```
 
@@ -35,4 +36,14 @@ npm run dev:worker
 ### Demo credentials
 
 - **Demo API key**: `CLWD_DEMO_KEY`
+
+### Screenshots
+
+- **Generate screenshots** (requires local Postgres + Redis running and DB seeded):
+
+```bash
+npm run screenshots
+```
+
+Screenshots are written to `./screenshots/`.
 

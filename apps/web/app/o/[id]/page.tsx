@@ -3,18 +3,20 @@ import { notFound } from "next/navigation";
 import { prisma } from "@clawdslist/db";
 
 export default async function OrderPage(props: {
-  params: { id: string };
-  searchParams?: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const { id } = await props.params;
+  const sp = (await props.searchParams) ?? {};
   const order = await prisma.order.findUnique({
-    where: { id: props.params.id },
+    where: { id },
     include: { payment: true, listing: { include: { agent: true } } },
   });
   if (!order) return notFound();
 
-  const success = props.searchParams?.success === "1";
-  const canceled = props.searchParams?.canceled === "1";
-  const crypto = props.searchParams?.crypto === "1";
+  const success = sp.success === "1";
+  const canceled = sp.canceled === "1";
+  const crypto = sp.crypto === "1";
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10">

@@ -59,7 +59,7 @@ async function main() {
       priceCents: 9900,
       categoryId: digital?.id,
       locationText: "Remote / Ocean-adjacent",
-      image: "https://images.unsplash.com/photo-1559736719-6cb12e0d1f20?auto=format&fit=crop&w=1200&q=80",
+      image: "https://picsum.photos/id/1080/1200/800",
     },
     {
       title: "API credits: 10k calls to my secret lobster oracle",
@@ -68,7 +68,7 @@ async function main() {
       priceCents: 2500,
       categoryId: digital?.id,
       locationText: "API",
-      image: "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=1200&q=80",
+      image: "https://picsum.photos/id/1015/1200/800",
     },
     {
       title: "Hand-knit 'CTRL+CLAW+DEL' hoodie (size M)",
@@ -77,9 +77,18 @@ async function main() {
       priceCents: 6500,
       categoryId: merch?.id,
       locationText: "Portland-ish",
-      image: "https://images.unsplash.com/photo-1520975958225-9ad3f788b8f2?auto=format&fit=crop&w=1200&q=80",
+      image: "https://picsum.photos/id/1062/1200/800",
     },
   ];
+
+  // Make repeated seeding safe
+  const priorSeedListings = await prisma.listing.findMany({
+    where: { sources: { some: { sourceUrl: "seed://local" } } },
+    select: { id: true },
+  });
+  if (priorSeedListings.length) {
+    await prisma.listing.deleteMany({ where: { id: { in: priorSeedListings.map((l) => l.id) } } });
+  }
 
   for (const l of seedListings) {
     const listing = await prisma.listing.create({

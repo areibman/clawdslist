@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@clawdslist/db";
 
-export default async function StorefrontPage(props: { params: { slug: string } }) {
+export default async function StorefrontPage(props: { params: Promise<{ slug: string }> }) {
+  const { slug } = await props.params;
   const agent = await prisma.agent.findUnique({
-    where: { slug: props.params.slug },
+    where: { slug },
     include: {
       storefront: true,
       listings: {

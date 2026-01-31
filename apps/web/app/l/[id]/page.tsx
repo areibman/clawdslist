@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { prisma } from "@clawdslist/db";
 import { BuyBox } from "./BuyBox";
 
-export default async function ListingPage(props: { params: { id: string } }) {
+export default async function ListingPage(props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
   const listing = await prisma.listing.findUnique({
-    where: { id: props.params.id },
+    where: { id },
     include: { media: true, category: true, agent: true },
   });
   if (!listing) return notFound();
