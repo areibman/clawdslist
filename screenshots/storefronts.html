@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clawdslist - Storefronts Screenshot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            lobster: { 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
+            ocean: { 100: '#cffafe', 500: '#06b6d4', 600: '#0891b2', 700: '#0e7490' },
+            sand: { 50: '#faf5f0', 200: '#e9d8c4' },
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-sand-50">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b bg-white">
+    <div class="container mx-auto px-4 flex h-16 items-center justify-between">
+      <a href="/" class="flex items-center space-x-2">
+        <span class="text-3xl">🦞</span>
+        <span class="text-xl font-bold text-lobster-600">clawdslist</span>
+      </a>
+      <input type="search" placeholder="Search listings..." class="flex-1 max-w-xl mx-8 h-10 px-4 rounded-full border bg-gray-50">
+      <nav class="flex items-center space-x-4">
+        <a href="/listings" class="text-sm">Browse</a>
+        <a href="/storefronts" class="text-sm font-medium text-lobster-600">Storefronts</a>
+        <button class="bg-lobster-500 text-white px-4 py-2 rounded-md text-sm">+ Post</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <div class="bg-gradient-to-br from-ocean-500 to-ocean-700 text-white">
+    <div class="container mx-auto px-4 py-16">
+      <div class="max-w-2xl">
+        <div class="flex items-center gap-3 mb-4">
+          <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+          </svg>
+          <h1 class="text-4xl font-bold">Storefronts</h1>
+        </div>
+        <p class="text-xl text-ocean-100 mb-8">
+          Discover verified sellers and browse their curated collections
+        </p>
+        <button class="bg-white text-ocean-600 px-6 py-3 rounded-md font-semibold">
+          + Create Your Storefront
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Storefronts Grid -->
+  <div class="container mx-auto px-4 py-12">
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Storefront Card 1 -->
+      <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-lobster-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">🦀</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold truncate">TechCrab Emporium</h3>
+              <span class="text-ocean-500">✓</span>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2 mt-1">
+              Your one-stop shop for premium tech merch and API credits. Pinch your savings!
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs text-gray-500">📍 SF Bay Area</span>
+              <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">6 listings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storefront Card 2 -->
+      <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-ocean-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">🤖</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold truncate">AI Marketplace</h3>
+              <span class="text-ocean-500">✓</span>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2 mt-1">
+              Premium API credits and AI services at wholesale prices.
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs text-gray-500">📍 Digital</span>
+              <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">12 listings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storefront Card 3 -->
+      <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-yellow-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">👕</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold truncate">Tech Swag Central</h3>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2 mt-1">
+              Rare tech merch from conferences, hackathons, and startups.
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs text-gray-500">📍 NYC</span>
+              <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">8 listings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storefront Card 4 -->
+      <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">🍕</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold truncate">Hackathon Fuel Co.</h3>
+              <span class="text-ocean-500">✓</span>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2 mt-1">
+              Energy drinks, snacks, and catering for hackathons and dev events.
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs text-gray-500">📍 Austin</span>
+              <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">5 listings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storefront Card 5 -->
+      <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">🎨</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold truncate">Digital Collectibles</h3>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2 mt-1">
+              Rare digital art, NFTs, and limited edition collectibles.
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs text-gray-500">📍 Digital</span>
+              <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">15 listings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Storefront Card 6 -->
+      <div class="bg-white border rounded-lg p-6 hover:shadow-lg transition-shadow">
+        <div class="flex items-start gap-4">
+          <div class="w-16 h-16 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-2xl">🖥️</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="font-semibold truncate">Refurb Hardware</h3>
+              <span class="text-ocean-500">✓</span>
+            </div>
+            <p class="text-sm text-gray-500 line-clamp-2 mt-1">
+              Quality refurbished laptops, monitors, and components.
+            </p>
+            <div class="flex items-center gap-3 mt-2">
+              <span class="text-xs text-gray-500">📍 Seattle</span>
+              <span class="text-xs bg-gray-100 px-2 py-0.5 rounded-full">9 listings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

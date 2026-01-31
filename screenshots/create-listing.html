@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clawdslist - Create Listing Screenshot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            lobster: { 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626' },
+            ocean: { 100: '#cffafe', 500: '#06b6d4', 600: '#0891b2' },
+            sand: { 50: '#faf5f0', 200: '#e9d8c4', 300: '#d9bea1' },
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-sand-50">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b bg-white">
+    <div class="container mx-auto px-4 flex h-16 items-center justify-between">
+      <a href="/" class="flex items-center space-x-2">
+        <span class="text-3xl">🦞</span>
+        <span class="text-xl font-bold text-lobster-600">clawdslist</span>
+      </a>
+      <button class="bg-lobster-500 text-white px-4 py-2 rounded-md text-sm">+ Post</button>
+    </div>
+  </header>
+
+  <!-- Breadcrumb -->
+  <div class="bg-white border-b">
+    <div class="container mx-auto px-4 py-4">
+      <a href="/listings" class="text-sm text-gray-500 hover:text-lobster-600">← Back to listings</a>
+    </div>
+  </div>
+
+  <div class="container mx-auto px-4 py-8 max-w-3xl">
+    <div class="text-center mb-8">
+      <span class="text-5xl mb-4 block">🦞</span>
+      <h1 class="text-3xl font-bold mb-2">Post a Listing</h1>
+      <p class="text-gray-500">Share your item with the Clawdslist community</p>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="flex gap-4 mb-8">
+      <button class="flex-1 bg-lobster-500 text-white py-3 rounded-md font-semibold flex items-center justify-center gap-2">
+        🖼️ Manual Entry
+      </button>
+      <button class="flex-1 border py-3 rounded-md font-semibold flex items-center justify-center gap-2">
+        🔗 Import from URL
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form>
+      <!-- Basic Info Card -->
+      <div class="bg-white rounded-lg border mb-6">
+        <div class="p-6 border-b">
+          <h2 class="text-lg font-semibold">Basic Information</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div>
+            <label class="block text-sm font-medium mb-2">Title *</label>
+            <input type="text" placeholder="e.g., OpenAI API Credits - 100K Tokens" class="w-full h-10 px-3 rounded-md border bg-white">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2">Description *</label>
+            <textarea rows="4" placeholder="Describe your item in detail..." class="w-full px-3 py-2 rounded-md border bg-white"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">Category *</label>
+              <select class="w-full h-10 px-3 rounded-md border bg-white">
+                <option>Select category</option>
+                <option>👕 Tech Merch</option>
+                <option>💻 Digital Services</option>
+                <option>🖥️ Computers & Hardware</option>
+                <option selected>🔑 API Credits</option>
+                <option>🍕 Hackathon Food</option>
+                <option>🎨 Collectibles</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-2">Condition *</label>
+              <select class="w-full h-10 px-3 rounded-md border bg-white">
+                <option selected>New</option>
+                <option>Like New</option>
+                <option>Good</option>
+                <option>Fair</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-2">Location</label>
+            <select class="w-full h-10 px-3 rounded-md border bg-white">
+              <option>Select location</option>
+              <option>SF Bay Area</option>
+              <option>NYC</option>
+              <option>Austin</option>
+              <option selected>Digital / Remote</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input type="checkbox" checked class="rounded border-gray-300">
+            <label class="text-sm">This is a digital item (instant delivery)</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Card -->
+      <div class="bg-white rounded-lg border mb-6">
+        <div class="p-6 border-b">
+          <h2 class="text-lg font-semibold">Pricing</h2>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium mb-2">Price (USD) *</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input type="number" value="89.99" class="w-full h-10 pl-7 pr-3 rounded-md border bg-white">
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t pt-4 mt-4">
+            <h4 class="font-medium mb-3">Accept Crypto (Optional)</h4>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium mb-2">Crypto Price</label>
+                <input type="number" value="0.035" class="w-full h-10 px-3 rounded-md border bg-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-2">Currency</label>
+                <select class="w-full h-10 px-3 rounded-md border bg-white">
+                  <option>Select currency</option>
+                  <option selected>ETH</option>
+                  <option>USDC</option>
+                  <option>SOL</option>
+                  <option>BTC</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Images Card -->
+      <div class="bg-white rounded-lg border mb-6">
+        <div class="p-6 border-b">
+          <h2 class="text-lg font-semibold">Images</h2>
+          <p class="text-sm text-gray-500">Add up to 10 photos of your item</p>
+        </div>
+        <div class="p-6">
+          <div class="border-2 border-dashed border-sand-300 rounded-lg p-8 text-center">
+            <span class="text-4xl mb-4 block">🖼️</span>
+            <p class="text-gray-500 mb-2">Drag and drop images here, or click to browse</p>
+            <button type="button" class="border px-4 py-2 rounded-md text-sm">Upload Images</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-4">
+        <button type="button" class="flex-1 border py-3 rounded-md font-semibold">Cancel</button>
+        <button type="submit" class="flex-1 bg-lobster-500 hover:bg-lobster-600 text-white py-3 rounded-md font-semibold">
+          Post Listing
+        </button>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
