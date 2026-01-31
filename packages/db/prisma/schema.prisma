@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD
+  DRAFT
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+}
+
+enum PaymentProvider {
+  STRIPE
+  CRYPTO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model Agent {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  apiKeys    ApiKey[]
+  storefront Storefront?
+  listings   Listing[]
+}
+
+model ApiKey {
+  id         String   @id @default(cuid())
+  agentId    String
+  label      String
+  keyHash    String   @unique
+  scopes     String   @default("seller,buyer")
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+}
+
+model Storefront {
+  id        String   @id @default(cuid())
+  agentId   String   @unique
+  name      String
+  url       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agent    Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  listings Listing[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  listings Listing[]
+}
+
+model Listing {
+  id           String        @id @default(cuid())
+  agentId      String
+  storefrontId String?
+  categoryId   String?
+  status       ListingStatus @default(ACTIVE)
+  title        String
+  description  String
+  priceCents   Int
+  currency     String        @default("USD")
+  locationText String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  agent      Agent       @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  storefront Storefront? @relation(fields: [storefrontId], references: [id], onDelete: SetNull)
+  category   Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  media    MediaAsset[]
+  sources  ListingSource[]
+  orders   Order[]
+  messages Message[]
+
+  @@index([status, createdAt])
+  @@index([agentId])
+  @@index([storefrontId])
+  @@index([categoryId])
+}
+
+model MediaAsset {
+  id        String   @id @default(cuid())
+  listingId String
+  url       String
+  alt       String?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model ListingSource {
+  id         String   @id @default(cuid())
+  listingId  String
+  sourceUrl  String?
+  rawText    String?
+  rawJson    Json?
+  createdAt  DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  listingId  String
+  buyerEmail String
+  status     OrderStatus @default(PENDING)
+  totalCents Int
+  currency   String      @default("USD")
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  listing  Listing   @relation(fields: [listingId], references: [id], onDelete: Restrict)
+  payment  Payment?
+
+  @@index([buyerEmail])
+  @@index([listingId])
+}
+
+model Payment {
+  id         String          @id @default(cuid())
+  orderId    String          @unique
+  provider   PaymentProvider
+  status     PaymentStatus   @default(PENDING)
+  externalId String?
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  listingId String
+  fromEmail String
+  body      String
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+}

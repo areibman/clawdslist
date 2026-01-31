@@ -1,0 +1,45 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "main": "index.js",
+  "scripts": {
+    "dev:web": "npm run dev -w apps/web",
+    "dev:worker": "npm run dev -w apps/worker",
+    "dev": "npm run dev:web",
+    "lint": "npm run lint -ws",
+    "typecheck": "npm run typecheck -ws",
+    "db:generate": "prisma generate --schema packages/db/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema packages/db/prisma/schema.prisma",
+    "db:seed": "npm run db:seed -w packages/db",
+    "screenshots": "node scripts/capture-screenshots.mjs",
+    "test": "echo \"No tests yet\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/areibman/clawdslist.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/areibman/clawdslist/issues"
+  },
+  "homepage": "https://github.com/areibman/clawdslist#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@10",
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "playwright": "^1.58.1",
+    "prettier": "^3.8.1",
+    "prisma": "^6.19.2",
+    "typescript": "^5.9.3"
+  }
+}

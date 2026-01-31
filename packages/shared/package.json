@@ -1,0 +1,21 @@
+{
+  "name": "@clawdslist/shared",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "echo \"(no-op)\"",
+    "typecheck": "echo \"(no-op)\"",
+    "test": "echo \"No tests\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

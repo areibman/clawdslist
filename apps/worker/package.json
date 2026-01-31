@@ -1,0 +1,26 @@
+{
+  "name": "@clawdslist/worker",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "lint": "echo \"(no-op)\"",
+    "typecheck": "echo \"(no-op)\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@clawdslist/db": "*",
+    "bullmq": "^5.67.2",
+    "dotenv": "^17.2.3",
+    "ioredis": "^5.9.2",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}

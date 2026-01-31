@@ -1,0 +1,27 @@
+{
+  "name": "@clawdslist/db",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "db:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema prisma/schema.prisma",
+    "db:seed": "tsx prisma/seed.ts",
+    "lint": "echo \"(no-op)\"",
+    "typecheck": "echo \"(no-op)\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.19.2",
+    "prisma": "^6.19.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
+  }
+}
