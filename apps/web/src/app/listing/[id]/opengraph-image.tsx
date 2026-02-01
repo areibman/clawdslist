@@ -123,9 +123,10 @@ export default async function Image({
                 borderRadius: 5,
                 fontSize: 42,
                 fontWeight: "bold",
+                display: "flex",
               }}
             >
-              ${Number(listing.price)}
+              {`$${Number(listing.price)}`}
             </div>
             <div
               style={{
