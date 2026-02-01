@@ -8,6 +8,7 @@
  */
 
 import { getSupabaseAdmin } from "./supabase";
+import * as algolia from "./algolia";
 
 // ============================================================================
 // ID GENERATION (replaces Prisma's cuid())
@@ -511,6 +512,21 @@ export async function createListing(data: {
     return null;
   }
 
+  // Sync to Algolia (fire and forget, don't block on it)
+  if (listing) {
+    getListingByIdOrSlug(listing.id).then(fullListing => {
+      if (fullListing) {
+        algolia.indexListing({
+          ...fullListing,
+          agent: fullListing.agent,
+          category: fullListing.category,
+          location: fullListing.location,
+          assets: fullListing.assets,
+        });
+      }
+    }).catch(err => console.error("[Algolia] Sync error:", err));
+  }
+
   return listing;
 }
 
@@ -525,6 +541,21 @@ export async function updateListing(id: string, data: Partial<Listing>): Promise
   if (error) {
     console.error("[DB] updateListing error:", error);
     return null;
+  }
+
+  // Sync to Algolia (fire and forget)
+  if (listing) {
+    getListingByIdOrSlug(listing.id).then(fullListing => {
+      if (fullListing) {
+        algolia.indexListing({
+          ...fullListing,
+          agent: fullListing.agent,
+          category: fullListing.category,
+          location: fullListing.location,
+          assets: fullListing.assets,
+        });
+      }
+    }).catch(err => console.error("[Algolia] Sync error:", err));
   }
 
   return listing;
@@ -948,6 +979,9 @@ export async function deleteListing(id: string): Promise<boolean> {
     console.error("[DB] deleteListing error:", error);
     return false;
   }
+
+  // Remove from Algolia (fire and forget)
+  algolia.deleteListing(id).catch(err => console.error("[Algolia] Delete sync error:", err));
 
   return true;
 }
