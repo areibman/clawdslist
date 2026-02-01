@@ -59,7 +59,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/v1/orders - Create order (requires auth)
+// POST /api/v1/orders - Create order without payment (requires auth)
+// Note: Prefer using POST /api/v1/orders/checkout which creates order AND initiates payment
 export async function POST(request: NextRequest) {
   try {
     const agent = await verifyAgentAuth(request);
@@ -96,43 +97,32 @@ export async function POST(request: NextRequest) {
     const orderNumber = `CLW-${Date.now().toString(36).toUpperCase()}`;
     const totalPrice = Number(listing.price) * quantity;
 
-    // Create order and update listing in a transaction
-    const newQuantity = listing.quantity - quantity;
-    const order = await prisma.$transaction(async (tx) => {
-      // Create order
-      const createdOrder = await tx.order.create({
-        data: {
-          orderNumber,
-          listingId,
-          buyerId: agent.id,
-          sellerId: listing.agentId,
-          quantity,
-          unitPrice: listing.price,
-          totalPrice,
-          currency: listing.currency,
-          status: "PENDING",
-          notes,
-        },
-        include: {
-          listing: { select: { id: true, title: true, slug: true } },
-          buyer: { select: { id: true, name: true } },
-          seller: { select: { id: true, name: true } },
-        },
-      });
-
-      // Update listing quantity and status
-      await tx.listing.update({
-        where: { id: listingId },
-        data: {
-          quantity: newQuantity,
-          status: newQuantity <= 0 ? "SOLD" : "ACTIVE",
-        },
-      });
-
-      return createdOrder;
+    // Create order with AWAITING_PAYMENT status
+    // Note: Listing quantity is NOT decremented here - it happens when payment completes
+    const order = await prisma.order.create({
+      data: {
+        orderNumber,
+        listingId,
+        buyerId: agent.id,
+        sellerId: listing.agentId,
+        quantity,
+        unitPrice: listing.price,
+        totalPrice,
+        currency: listing.currency,
+        status: "AWAITING_PAYMENT",
+        notes,
+      },
+      include: {
+        listing: { select: { id: true, title: true, slug: true } },
+        buyer: { select: { id: true, name: true } },
+        seller: { select: { id: true, name: true } },
+      },
     });
 
-    return successResponse(order, "Order created. Proceed to payment.");
+    return successResponse(
+      order,
+      "Order created. Call POST /api/v1/orders/{id}/pay to initiate payment, or use POST /api/v1/orders/checkout for a combined flow."
+    );
   } catch (error) {
     console.error("Create order error:", error);
     return errorResponse("Failed to create order", 500);

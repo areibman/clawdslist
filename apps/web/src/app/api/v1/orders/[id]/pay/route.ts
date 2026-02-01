@@ -42,8 +42,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (order.buyerId !== agent.id) {
       return errorResponse("Forbidden", 403);
     }
-    if (order.status !== "PENDING") {
-      return errorResponse("Order is not pending payment");
+    if (order.status !== "AWAITING_PAYMENT") {
+      return errorResponse("Order is not awaiting payment");
     }
 
     // Initiate payment via the appropriate provider
@@ -65,6 +65,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     // Create payment record in database
+    // Order stays in AWAITING_PAYMENT until webhook confirms payment
     await prisma.payment.create({
       data: {
         orderId,
@@ -74,12 +75,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         currency: order.currency,
         ...(method === "STRIPE" && { stripeSessionId: (paymentResult as any).sessionId }),
       },
-    });
-
-    // Update order status
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: "PAYMENT_PENDING" },
     });
 
     return successResponse(

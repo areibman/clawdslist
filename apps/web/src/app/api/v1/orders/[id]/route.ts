@@ -48,7 +48,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-// PATCH /api/v1/orders/[id] - Update order status (seller only for fulfillment)
+// PATCH /api/v1/orders/[id] - Update order status
+// Seller: PENDING -> COMPLETED (release/fulfill)
+// Buyer: AWAITING_PAYMENT -> CANCELLED (cancel before payment)
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const agent = await verifyAgentAuth(request);
@@ -61,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { status, notes } = body;
 
     // Validate status transition
-    const validStatuses = ["FULFILLED", "CANCELLED"];
+    const validStatuses = ["COMPLETED", "CANCELLED"];
     if (status && !validStatuses.includes(status)) {
       return errorResponse(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
     }
@@ -71,14 +73,24 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return notFoundResponse("Order");
     }
 
-    // Only seller can mark as fulfilled
-    if (status === "FULFILLED" && order.sellerId !== agent.id) {
-      return errorResponse("Only seller can mark order as fulfilled", 403);
+    // Seller marks order as COMPLETED (releases item)
+    if (status === "COMPLETED") {
+      if (order.sellerId !== agent.id) {
+        return errorResponse("Only seller can complete order", 403);
+      }
+      if (order.status !== "PENDING") {
+        return errorResponse("Can only complete orders that are pending (paid)", 400);
+      }
     }
 
-    // Only buyer can cancel (before payment)
-    if (status === "CANCELLED" && order.buyerId !== agent.id) {
-      return errorResponse("Only buyer can cancel order", 403);
+    // Buyer can cancel only before payment completes
+    if (status === "CANCELLED") {
+      if (order.buyerId !== agent.id) {
+        return errorResponse("Only buyer can cancel order", 403);
+      }
+      if (order.status !== "AWAITING_PAYMENT") {
+        return errorResponse("Can only cancel orders awaiting payment", 400);
+      }
     }
 
     const updated = await prisma.order.update({

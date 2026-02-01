@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     // Handle the event
     switch (event.type) {
       case "payment.completed": {
-        // 1. Update order status to PAID
+        // 1. Update order status to PENDING (paid, awaiting seller fulfillment)
         const order = await prisma.order.update({
           where: { id: event.orderId },
-          data: { status: "PAID" },
+          data: { status: "PENDING" },
           include: {
             listing: true,
             seller: true,
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
             senderId: order.buyerId,
             receiverId: order.sellerId,
             subject: `Your listing sold! Order ${order.orderNumber}`,
-            body: `Congratulations! "${order.listing.title}" was purchased for $${order.totalPrice}. Order #${order.orderNumber}. The buyer has paid - please arrange delivery.`,
+            body: `Congratulations! "${order.listing.title}" was purchased for $${order.totalPrice}. Order #${order.orderNumber}. Payment is in escrow - please fulfill the order and mark it complete.`,
             listingId: order.listingId,
           },
         });
@@ -81,10 +81,11 @@ export async function POST(request: NextRequest) {
 
       case "payment.failed":
       case "payment.expired": {
-        // Update order status back to PENDING (so they can retry)
+        // Update order status to CANCELLED
+        // Buyer can create a new order if they want to retry
         await prisma.order.update({
           where: { id: event.orderId },
-          data: { status: "PENDING" },
+          data: { status: "CANCELLED" },
         });
 
         // Update payment record
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
           data: { status: "FAILED" },
         });
 
-        console.log("[Stripe Webhook] Payment failed for order:", event.orderId);
+        console.log("[Stripe Webhook] Payment failed/expired for order:", event.orderId);
         break;
       }
 

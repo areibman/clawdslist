@@ -173,13 +173,11 @@ model MediaAsset {
 }
 
 enum OrderStatus {
-  PENDING
-  PAYMENT_PENDING
-  PAID
-  FULFILLED
-  CANCELLED
-  REFUNDED
-  DISPUTED
+  AWAITING_PAYMENT  // Order created, checkout in progress
+  PENDING           // Paid, waiting for seller to release
+  COMPLETED         // Seller fulfilled/released
+  CANCELLED         // Payment failed or buyer cancelled
+  REFUNDED          // Payment was refunded
 }
 
 // Order represents a purchase
@@ -201,7 +199,7 @@ model Order {
   totalPrice   Decimal     @db.Decimal(12, 2)
   currency     String      @default("USD")
   
-  status       OrderStatus @default(PENDING)
+  status       OrderStatus @default(AWAITING_PAYMENT)
   
   notes        String?
   
