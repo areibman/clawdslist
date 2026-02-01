@@ -1,19 +1,32 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCategoryBySlug, getListingsByCategory } from "@/lib/db";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import type { Metadata } from "next";
 
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
 
 async function getCategory(slug: string) {
-  return getCategoryBySlug(slug);
+  if (!isSupabaseConfigured()) return null;
+  try {
+    return await getCategoryBySlug(slug);
+  } catch {
+    return null;
+  }
 }
 
 async function getCategoryData(slug: string) {
-  const { listings, category } = await getListingsByCategory(slug);
-  if (!category) return null;
-  return { category, listings };
+  if (!isSupabaseConfigured()) {
+    return { category: { id: slug, name: slug, slug, description: null }, listings: [], dbError: true };
+  }
+  try {
+    const { listings, category } = await getListingsByCategory(slug);
+    if (!category) return null;
+    return { category, listings, dbError: false };
+  } catch {
+    return { category: { id: slug, name: slug, slug, description: null }, listings: [], dbError: true };
+  }
 }
 
 export async function generateMetadata({
@@ -79,7 +92,7 @@ export default async function CategoryPage({
     notFound();
   }
 
-  const { category, listings } = data;
+  const { category, listings, dbError } = data;
 
   return (
     <div>
@@ -91,9 +104,26 @@ export default async function CategoryPage({
       <h1 style={{ fontSize: 18, fontWeight: "bold", marginBottom: 5 }}>
         🦞 {category.name}
       </h1>
-      <p style={{ fontSize: 12, color: "#666", marginBottom: 15 }}>
-        {category.description}
-      </p>
+      {category.description && (
+        <p style={{ fontSize: 12, color: "#666", marginBottom: 15 }}>
+          {category.description}
+        </p>
+      )}
+
+      {dbError && (
+        <div
+          style={{
+            padding: 15,
+            background: "#fff3cd",
+            border: "1px solid #ffeeba",
+            color: "#856404",
+            marginBottom: 20,
+            fontSize: 13,
+          }}
+        >
+          Database is not configured. Set up Supabase environment variables to enable listings.
+        </div>
+      )}
 
       {/* Search within category */}
       <div className="cl-search" style={{ marginBottom: 20 }}>
@@ -109,40 +139,44 @@ export default async function CategoryPage({
         </form>
       </div>
 
-      {/* Listings count */}
-      <div style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>
-        {listings.length} listings in {category.name}
-      </div>
-
-      {/* Listings */}
-      <div>
-        {listings.map((listing) => (
-          <div key={listing.id} className="cl-listing-row">
-            <span className="cl-listing-date">
-              {new Date(listing.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-            </span>
-            <span className="cl-listing-title">
-              <Link href={`/listing/${listing.slug}`}>{listing.title}</Link>
-              <span className="agent-badge">{listing.agent.name}</span>
-            </span>
-            <span className="cl-listing-price">${Number(listing.price)}</span>
-            <span className="cl-listing-location">{listing.location?.name || "anywhere"}</span>
+      {!dbError && (
+        <>
+          {/* Listings count */}
+          <div style={{ fontSize: 12, color: "#666", marginBottom: 10 }}>
+            {listings.length} listings in {category.name}
           </div>
-        ))}
-      </div>
 
-      {listings.length === 0 && (
-        <div
-          style={{
-            padding: 20,
-            textAlign: "center",
-            color: "#666",
-            background: "#f5f5f5",
-          }}
-        >
-          no listings in this category yet.{" "}
-          <Link href="/post">be the first to post!</Link>
-        </div>
+          {/* Listings */}
+          <div>
+            {listings.map((listing) => (
+              <div key={listing.id} className="cl-listing-row">
+                <span className="cl-listing-date">
+                  {new Date(listing.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                </span>
+                <span className="cl-listing-title">
+                  <Link href={`/listing/${listing.slug}`}>{listing.title}</Link>
+                  <span className="agent-badge">{listing.agent.name}</span>
+                </span>
+                <span className="cl-listing-price">${Number(listing.price).toLocaleString()}</span>
+                <span className="cl-listing-location">{listing.location?.name || "anywhere"}</span>
+              </div>
+            ))}
+          </div>
+
+          {listings.length === 0 && (
+            <div
+              style={{
+                padding: 20,
+                textAlign: "center",
+                color: "#666",
+                background: "#f5f5f5",
+              }}
+            >
+              no listings in this category yet.{" "}
+              <Link href="/post">be the first to post!</Link>
+            </div>
+          )}
+        </>
       )}
 
       {/* Post CTA */}

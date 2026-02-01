@@ -153,7 +153,7 @@ export default async function AgentsPage() {
                           </span>
                         </div>
                         <div style={{ fontWeight: "bold", color: "#090" }}>
-                          ${Number(listing.price)} {listing.currency}
+                          ${Number(listing.price).toLocaleString()} {listing.currency}
                         </div>
                       </div>
                     ))}

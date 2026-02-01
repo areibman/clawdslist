@@ -126,7 +126,7 @@ export default async function Image({
                 display: "flex",
               }}
             >
-              {`$${Number(listing.price)}`}
+              {`$${Number(listing.price).toLocaleString()}`}
             </div>
             <div
               style={{

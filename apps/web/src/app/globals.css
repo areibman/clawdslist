@@ -35,7 +35,7 @@ a:hover {
 .cl-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 10px;
+  padding: 12px 20px;
 }
 
 .cl-header {
@@ -64,34 +64,332 @@ a:hover {
   margin-right: 10px;
 }
 
-/* Category boxes */
-.cl-categories {
+/* Header bar - Craigslist style */
+.cl-header-bar {
+  display: -webkit-flex;
   display: flex;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  -webkit-align-items: center;
+  align-items: center;
   flex-wrap: wrap;
-  gap: 20px;
+  padding: 10px 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #ddd;
 }
 
-.cl-category-box {
-  flex: 1;
-  min-width: 200px;
+.cl-header-left {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.cl-category-title {
+/* Safari-safe spacing for header-left children */
+.cl-header-left > * {
+  margin-right: 8px;
+}
+
+.cl-header-left > *:last-child {
+  margin-right: 0;
+}
+
+.cl-location-icon {
+  font-size: 18px;
+}
+
+.cl-location-name {
+  font-size: 18px;
   font-weight: bold;
-  font-size: 13px;
-  margin-bottom: 5px;
   color: var(--claw-dark);
 }
 
-.cl-category-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.cl-location-links {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  margin-left: 10px;
   font-size: 12px;
 }
 
+/* Safari-safe spacing for location links */
+.cl-location-links a {
+  padding: 3px 8px;
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  text-decoration: none;
+  margin-right: 6px;
+}
+
+.cl-location-links a:last-child {
+  margin-right: 0;
+}
+
+.cl-location-links a:hover {
+  background: #e0e0e0;
+}
+
+.cl-header-right {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+}
+
+/* Safari-safe spacing for header-right children */
+.cl-header-right > * {
+  margin-left: 15px;
+}
+
+.cl-header-right > *:first-child {
+  margin-left: 0;
+}
+
+.cl-header-link {
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.cl-header-link:hover {
+  text-decoration: underline;
+}
+
+/* Warning banner */
+.cl-warning-banner {
+  background: #fff3cd;
+  border: 1px solid #ffeeba;
+  border-radius: 4px;
+  color: #856404;
+  padding: 10px 16px;
+  margin: 0 0 16px 0;
+  font-size: 12px;
+}
+
+/* Welcome banner */
+.cl-welcome-banner {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-justify-content: space-between;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8c42 100%);
+  border: 1px solid #e55a2b;
+  border-radius: 4px;
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cl-welcome-banner span {
+  color: #fff !important;
+}
+
+.cl-welcome-banner a {
+  color: #fff !important;
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: underline;
+  margin-left: 12px;
+}
+
+.cl-welcome-banner a:hover {
+  color: #ffe0d0 !important;
+}
+
+/* Agent banner */
+.cl-agent-banner {
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: center;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin: 0 0 16px 0;
+  font-size: 12px;
+}
+
+/* Safari-safe spacing for agent banner children */
+.cl-agent-banner > * {
+  margin-right: 10px;
+}
+
+.cl-agent-banner > *:last-child {
+  margin-right: 0;
+}
+
+.cl-copy-url {
+  font-family: monospace;
+  font-size: 11px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  background: #fff;
+  color: #333;
+  width: 250px;
+  cursor: text;
+}
+
+.cl-copy-url:focus {
+  outline: 2px solid var(--claw-purple) !important;
+  outline-offset: 1px !important;
+}
+
+.cl-agent-links {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.cl-agent-banner code {
+  background: #fff;
+  padding: 3px 8px;
+  border: 1px solid #ccc;
+  font-size: 11px;
+}
+
+.cl-agent-banner > span {
+  color: #333;
+}
+
+/* Main grid - Craigslist style */
+.cl-main-grid {
+  display: grid !important;
+  grid-template-columns: 180px 1fr !important;
+  grid-template-areas: "sidebar categories" !important;
+  gap: 30px !important;
+  margin-top: 20px !important;
+}
+
+.cl-sidebar {
+  grid-area: sidebar !important;
+  display: block !important;
+  width: 180px !important;
+}
+
+.cl-sidebar > * {
+  display: block !important;
+  margin-bottom: 15px !important;
+}
+
+.cl-category-grid {
+  grid-area: categories !important;
+}
+
+.cl-help-links,
+.cl-about-links {
+  margin-bottom: 0 !important;
+}
+
+.cl-help-links a,
+.cl-about-links a {
+  display: block !important;
+  font-size: 12px !important;
+  margin: 3px 0 !important;
+}
+
+.cl-stats-mini {
+  font-size: 11px !important;
+  color: #666 !important;
+  padding: 10px !important;
+  background: #f0f0f0 !important;
+  border: 1px solid #ddd !important;
+}
+
+/* Category grid */
+.cl-category-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, 1fr) !important;
+  gap: 20px !important;
+  align-content: start !important;
+}
+
+.cl-category-col {
+  min-width: 0 !important;
+}
+
+.cl-regions-col {
+  min-width: 0 !important;
+}
+
+.cl-section-title {
+  font-weight: bold !important;
+  font-size: 13px !important;
+  margin-bottom: 8px !important;
+  color: var(--claw-dark) !important;
+  border-bottom: 1px solid #ddd !important;
+  padding-bottom: 3px !important;
+}
+
+/* Category boxes */
+.cl-categories {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 20px !important;
+}
+
+.cl-category-box {
+  flex: 1 !important;
+  min-width: 200px !important;
+}
+
+.cl-category-title {
+  font-weight: bold !important;
+  font-size: 13px !important;
+  margin-bottom: 5px !important;
+  color: var(--claw-dark) !important;
+}
+
+.cl-category-list {
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 12px !important;
+}
+
 .cl-category-list li {
-  margin: 2px 0;
+  display: block !important;
+  margin: 2px 0 !important;
+  line-height: 1.5 !important;
+}
+
+/* 2-column category list */
+.cl-category-list-2col {
+  columns: 2 !important;
+  column-gap: 15px !important;
+}
+
+.cl-category-list-2col li {
+  break-inside: avoid !important;
+}
+
+/* 3-column category list */
+.cl-category-list-3col {
+  columns: 3 !important;
+  column-gap: 10px !important;
+}
+
+.cl-category-list-3col li {
+  break-inside: avoid !important;
+}
+
+/* Recent sections */
+.cl-recent-section {
+  margin-top: 30px;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.cl-recent-section .cl-section-title {
+  border-bottom: none;
+  margin-bottom: 10px;
 }
 
 /* Listing rows */
@@ -114,13 +412,26 @@ a:hover {
 
 .cl-listing-title {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 10px;
+}
+
+.cl-listing-agent {
+  width: 100px;
+  text-align: right;
+  flex-shrink: 0;
+  padding-right: 10px;
 }
 
 .cl-listing-price {
-  width: 100px;
+  width: 90px;
   text-align: right;
   font-weight: bold;
   color: #090;
+  flex-shrink: 0;
 }
 
 .cl-listing-location {
@@ -132,10 +443,11 @@ a:hover {
 
 /* Search box */
 .cl-search {
-  margin: 15px 0;
-  padding: 10px;
+  margin: 0 0 16px 0;
+  padding: 12px 16px;
   background: #f0f0f0;
   border: 1px solid #ccc;
+  border-radius: 4px;
 }
 
 .cl-search input[type="text"] {
@@ -182,6 +494,14 @@ a:hover {
   color: #666;
 }
 
+.cl-footer-stats {
+  margin-top: 30px;
+  padding: 15px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  font-size: 12px;
+}
+
 /* Lobster mascot */
 .lobster-icon::before {
   content: "🦞";
@@ -191,12 +511,15 @@ a:hover {
 /* Agent badge */
 .agent-badge {
   display: inline-block;
-  padding: 1px 5px;
+  padding: 2px 6px;
   background: var(--claw-purple);
   color: white;
   font-size: 10px;
   border-radius: 3px;
-  margin-left: 5px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Sold badge */
@@ -218,4 +541,107 @@ a:hover {
 
 .cl-sold-row:hover {
   background: #f0fff0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1100px) {
+  .cl-category-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .cl-main-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cl-sidebar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  /* Safari-safe gap alternative */
+  .cl-sidebar > * {
+    margin-bottom: 0;
+  }
+
+  .cl-category-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cl-category-list-2col,
+  .cl-category-list-3col {
+    columns: 2;
+  }
+}
+
+@media (max-width: 700px) {
+  .cl-category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .cl-header-bar {
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+  }
+  
+  .cl-header-left {
+    margin-bottom: 10px;
+  }
+
+  .cl-welcome-banner {
+    flex-direction: column;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+  }
+  
+  .cl-welcome-banner a {
+    margin-left: 0;
+    margin-top: 8px;
+  }
+
+  .cl-search input[type="text"] {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .cl-listing-row {
+    -webkit-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
+
+  .cl-listing-date {
+    width: 100%;
+  }
+
+  .cl-listing-title {
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .cl-listing-agent {
+    width: auto;
+    text-align: left;
+    margin-right: 10px;
+  }
+
+  .cl-listing-price,
+  .cl-listing-location {
+    width: auto;
+    text-align: left;
+    margin-right: 15px;
+  }
+
+  .cl-category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cl-category-list-2col,
+  .cl-category-list-3col {
+    columns: 1;
+  }
 }

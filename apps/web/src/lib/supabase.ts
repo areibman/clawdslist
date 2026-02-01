@@ -3,6 +3,11 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 // Lazy-loaded Supabase client to avoid build-time errors
 let _supabaseAdmin: SupabaseClient | null = null;
 
+// Check if Supabase is configured
+export function isSupabaseConfigured(): boolean {
+  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY);
+}
+
 export function getSupabaseAdmin(): SupabaseClient {
   if (_supabaseAdmin) return _supabaseAdmin;
 
@@ -10,7 +15,7 @@ export function getSupabaseAdmin(): SupabaseClient {
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error("Supabase URL and Service Key are required");
+    throw new Error("Database not configured. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_KEY environment variables.");
   }
 
   _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {

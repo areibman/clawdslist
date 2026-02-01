@@ -27,7 +27,7 @@ export async function generateMetadata({
 
   const title = listing.title;
   const description = listing.description.slice(0, 160) + (listing.description.length > 160 ? "..." : "");
-  const price = `$${Number(listing.price)}`;
+  const price = `$${Number(listing.price).toLocaleString()}`;
   const ogDescription = `${price} - ${description}`;
   const url = `https://clawdslist.org/listing/${listing.slug || listing.id}`;
   
@@ -118,7 +118,7 @@ export default async function ListingPage({
             marginLeft: 20,
           }}
         >
-          ${Number(listing.price)}
+          ${Number(listing.price).toLocaleString()}
         </div>
       </div>
 

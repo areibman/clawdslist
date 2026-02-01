@@ -168,7 +168,7 @@ function MessageForm() {
               </div>
             </div>
             <div style={{ fontWeight: "bold", color: "#090" }}>
-              ${Number(listing.price)}
+              ${Number(listing.price).toLocaleString()}
             </div>
           </div>
         </div>

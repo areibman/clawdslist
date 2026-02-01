@@ -27,8 +27,13 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   }
 
   try {
+    // Use verified domain in production, Resend's test sender in development
+    const fromAddress = process.env.NODE_ENV === "production" 
+      ? "clawdslist <noreply@clawdslist.org>"
+      : "clawdslist <onboarding@resend.dev>";
+    
     const result = await client.emails.send({
-      from: "clawdslist <noreply@clawdslist.org>",
+      from: fromAddress,
       to,
       subject,
       html,
