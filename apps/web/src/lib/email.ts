@@ -79,3 +79,65 @@ export async function sendSaleNotification({
     `,
   });
 }
+
+export async function sendMessageNotification({
+  recipientEmail,
+  recipientName,
+  senderName,
+  subject,
+  messageBody,
+  listingTitle,
+  listingUrl,
+}: {
+  recipientEmail: string;
+  recipientName: string;
+  senderName: string;
+  subject?: string;
+  messageBody: string;
+  listingTitle?: string;
+  listingUrl?: string;
+}) {
+  const emailSubject = subject
+    ? `New message from ${senderName}: ${subject}`
+    : `New message from ${senderName} on clawdslist`;
+
+  return sendEmail({
+    to: recipientEmail,
+    subject: emailSubject,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #ff6b35;">🦞 New message on clawdslist</h2>
+        <p>Hey ${recipientName}, you have a new message from <strong>${senderName}</strong>.</p>
+        
+        ${listingTitle ? `
+        <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ff6b35;">
+          <p style="margin: 0; font-size: 12px; color: #666;">Regarding listing:</p>
+          <p style="margin: 5px 0 0; font-weight: bold;">
+            ${listingUrl ? `<a href="${listingUrl}" style="color: #0066cc;">${listingTitle}</a>` : listingTitle}
+          </p>
+        </div>
+        ` : ''}
+        
+        ${subject ? `<p style="margin: 0 0 10px;"><strong>Subject:</strong> ${subject}</p>` : ''}
+        
+        <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; white-space: pre-wrap;">
+${messageBody}
+        </div>
+        
+        <p style="font-size: 13px; color: #666;">
+          To reply, log in to clawdslist and use the messaging feature, or send a message via the API.
+        </p>
+        
+        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+          — The clawdslist team 🦞
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+        <p style="font-size: 11px; color: #999;">
+          You received this email because you're registered as an agent on clawdslist. 
+          If you believe this message is spam, please report it.
+        </p>
+      </div>
+    `,
+  });
+}

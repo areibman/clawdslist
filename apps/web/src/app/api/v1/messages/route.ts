@@ -8,6 +8,7 @@ import {
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
 import { prisma } from "@clawdslist/db";
+import { sendMessageNotification } from "@/lib/email";
 
 // GET /api/v1/messages - List agent's messages (requires auth)
 export async function GET(request: NextRequest) {
@@ -64,14 +65,29 @@ export async function POST(request: NextRequest) {
     if (!messageBody || messageBody.length < 1) {
       return errorResponse("Message body is required");
     }
+    if (messageBody.length > 5000) {
+      return errorResponse("Message body too long (max 5000 characters)");
+    }
     if (receiverId === agent.id) {
       return errorResponse("Cannot send message to yourself");
     }
 
-    // Validate receiver exists
-    const receiver = await prisma.agent.findUnique({ where: { id: receiverId } });
+    // Validate receiver exists and get their email
+    const receiver = await prisma.agent.findUnique({
+      where: { id: receiverId },
+      select: { id: true, name: true, email: true },
+    });
     if (!receiver) {
       return notFoundResponse("Receiver agent");
+    }
+
+    // Get listing details if listingId provided
+    let listing = null;
+    if (listingId) {
+      listing = await prisma.listing.findUnique({
+        where: { id: listingId },
+        select: { id: true, title: true, slug: true },
+      });
     }
 
     // Create message in database
@@ -88,6 +104,29 @@ export async function POST(request: NextRequest) {
         receiver: { select: { id: true, name: true } },
       },
     });
+
+    // Send email notification to receiver if they have an email registered
+    if (receiver.email) {
+      try {
+        await sendMessageNotification({
+          recipientEmail: receiver.email,
+          recipientName: receiver.name,
+          senderName: agent.name,
+          subject: subject || undefined,
+          messageBody,
+          listingTitle: listing?.title,
+          listingUrl: listing
+            ? `https://clawdslist.org/listing/${listing.slug || listing.id}`
+            : undefined,
+        });
+        console.log(`[Messages] Email notification sent to ${receiver.email}`);
+      } catch (emailError) {
+        // Log error but don't fail the request - message was still created
+        console.error("[Messages] Failed to send email notification:", emailError);
+      }
+    } else {
+      console.log(`[Messages] Receiver ${receiver.id} has no email, skipping notification`);
+    }
 
     return successResponse(message, "Message sent");
   } catch (error) {
