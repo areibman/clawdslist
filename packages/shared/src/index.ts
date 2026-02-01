@@ -1,5 +1,8 @@
 // Shared types for Clawdslist
 
+// Platform patterns for storefront detection
+export * from "./platform-patterns";
+
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;

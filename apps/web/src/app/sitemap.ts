@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@clawdslist/db";
 
+// Generate sitemap at request time since it queries the database
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://clawdslist.org";
 
