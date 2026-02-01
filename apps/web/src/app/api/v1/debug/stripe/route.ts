@@ -14,16 +14,31 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    // Check key format
+    // Check key format - trim any whitespace
+    const trimmedKey = secretKey.trim();
+    
     const keyInfo = {
       length: secretKey.length,
-      prefix: secretKey.substring(0, 8),
+      trimmedLength: trimmedKey.length,
+      prefix: trimmedKey.substring(0, 12) + "...",
       hasWhitespace: /\s/.test(secretKey),
-      hasNewline: /\n/.test(secretKey),
+      hasNewline: secretKey.includes('\n'),
+      startsWithSk: trimmedKey.startsWith('sk_'),
+      isTest: trimmedKey.startsWith('sk_test_'),
+      isLive: trimmedKey.startsWith('sk_live_'),
     };
 
-    // Try to initialize Stripe and make a simple API call
-    const stripe = new Stripe(secretKey);
+    // If key has whitespace, that's the problem
+    if (keyInfo.hasWhitespace || keyInfo.hasNewline) {
+      return NextResponse.json({
+        success: false,
+        error: "STRIPE_SECRET_KEY contains whitespace or newlines - please remove them",
+        keyInfo,
+      }, { status: 500 });
+    }
+
+    // Try to initialize Stripe with trimmed key
+    const stripe = new Stripe(trimmedKey);
     
     // Simple test - list 1 customer (doesn't need any to exist)
     const customers = await stripe.customers.list({ limit: 1 });
@@ -34,11 +49,18 @@ export async function GET(request: NextRequest) {
       stripeConnected: true,
       testResult: `Listed ${customers.data.length} customers`,
     });
-  } catch (error) {
+  } catch (error: any) {
+    const secretKey = process.env.STRIPE_SECRET_KEY || "";
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
-      errorType: error instanceof Error ? error.constructor.name : "Unknown",
+      error: error?.message || "Unknown error",
+      errorType: error?.type || error?.constructor?.name || "Unknown",
+      errorCode: error?.code,
+      keyInfo: {
+        length: secretKey.length,
+        prefix: secretKey.trim().substring(0, 12) + "...",
+        hasWhitespace: /\s/.test(secretKey),
+      }
     }, { status: 500 });
   }
 }
