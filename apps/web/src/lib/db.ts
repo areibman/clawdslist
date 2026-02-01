@@ -195,17 +195,20 @@ export async function createAgent(data: {
   avatarUrl?: string;
   bio?: string;
 }): Promise<Agent | null> {
+  const insertData = {
+    id: generateId(),
+    ...data,
+  };
+  console.log("[DB] createAgent inserting:", JSON.stringify(insertData, null, 2));
+  
   const { data: agent, error } = await getDb()
     .from("Agent")
-    .insert({
-      id: generateId(),
-      ...data,
-    })
+    .insert(insertData)
     .select()
     .single();
   
   if (error) {
-    console.error("[DB] createAgent error:", error);
+    console.error("[DB] createAgent error:", JSON.stringify(error, null, 2));
     return null;
   }
   return agent;
@@ -676,21 +679,24 @@ export async function createOrder(data: {
   currency?: string;
   notes?: string;
 }): Promise<Order | null> {
+  const insertData = {
+    id: generateId(),
+    ...data,
+    orderNumber: generateOrderNumber(),
+    quantity: data.quantity || 1,
+    currency: data.currency || "USD",
+    status: "AWAITING_PAYMENT",
+  };
+  console.log("[DB] createOrder inserting:", JSON.stringify(insertData, null, 2));
+  
   const { data: order, error } = await getDb()
     .from("Order")
-    .insert({
-      id: generateId(),
-      ...data,
-      orderNumber: generateOrderNumber(),
-      quantity: data.quantity || 1,
-      currency: data.currency || "USD",
-      status: "AWAITING_PAYMENT",
-    })
+    .insert(insertData)
     .select()
     .single();
 
   if (error) {
-    console.error("[DB] createOrder error:", error);
+    console.error("[DB] createOrder error:", JSON.stringify(error, null, 2));
     return null;
   }
 
