@@ -9,6 +9,7 @@
     "start": "bun run --filter=web start",
     "lint": "bun run --filter=web lint",
     "db:generate": "bun run --filter=@clawdslist/db generate",
+    "db:migrate:deploy": "bun run --filter=@clawdslist/db migrate:deploy",
     "db:push": "bun run --filter=@clawdslist/db push",
     "db:studio": "bun run --filter=@clawdslist/db studio",
     "db:seed": "bun run --filter=@clawdslist/db seed",

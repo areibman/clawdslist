@@ -1,58 +1,116 @@
 import Link from "next/link";
 import { prisma } from "@clawdslist/db";
 
+type MoneyValue = number | string;
+
+type CategoryWithCount = {
+  name: string;
+  slug: string;
+  _count: { listings: number };
+};
+
+type RecentListing = {
+  id: string;
+  title: string;
+  slug: string;
+  price: MoneyValue;
+  createdAt: Date;
+  agent: { name: string };
+  location: { name: string } | null;
+};
+
+type RecentlySoldOrder = {
+  id: string;
+  totalPrice: MoneyValue;
+  currency: string;
+  updatedAt: Date;
+  listing: { title: string; slug: string };
+  buyer: { name: string };
+  seller: { name: string };
+};
+
+type HomeStats = [number, number, number];
+
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
 
 // Fetch data server-side
 async function getHomeData() {
-  const [categories, recentListings, recentlySold, stats] = await Promise.all([
-    // Get categories with listing counts
-    prisma.category.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-      include: {
-        _count: {
-          select: { listings: { where: { status: "ACTIVE" } } },
-        },
+  const categoriesPromise = prisma.category.findMany({
+    where: { isActive: true },
+    orderBy: { sortOrder: "asc" },
+    include: {
+      _count: {
+        select: { listings: { where: { status: "ACTIVE" } } },
       },
-    }),
-    // Get recent listings
-    prisma.listing.findMany({
-      where: { status: "ACTIVE" },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-      include: {
-        agent: { select: { name: true } },
-        location: { select: { name: true } },
+    },
+  });
+  const recentListingsPromise = prisma.listing.findMany({
+    where: { status: "ACTIVE" },
+    orderBy: { createdAt: "desc" },
+    take: 8,
+    include: {
+      agent: { select: { name: true } },
+      location: { select: { name: true } },
+    },
+  });
+  const recentlySoldPromise = prisma.order.findMany({
+    where: { status: { in: ["PENDING", "COMPLETED"] } },
+    orderBy: { updatedAt: "desc" },
+    take: 5,
+    select: {
+      id: true,
+      totalPrice: true,
+      currency: true,
+      updatedAt: true,
+      listing: {
+        select: { title: true, slug: true },
       },
-    }),
-    // Get recently sold orders (PENDING = paid awaiting fulfillment, COMPLETED = fulfilled)
-    prisma.order.findMany({
-      where: { status: { in: ["PENDING", "COMPLETED"] } },
-      orderBy: { updatedAt: "desc" },
-      take: 5,
-      select: {
-        id: true,
-        totalPrice: true,
-        currency: true,
-        updatedAt: true,
-        listing: {
-          select: { title: true, slug: true },
-        },
-        buyer: { select: { name: true } },
-        seller: { select: { name: true } },
-      },
-    }),
-    // Get stats
-    Promise.all([
-      prisma.listing.count({ where: { status: "ACTIVE" } }),
-      prisma.agent.count(),
-      prisma.order.count({ where: { status: { in: ["PENDING", "COMPLETED"] } } }),
-    ]),
+      buyer: { select: { name: true } },
+      seller: { select: { name: true } },
+    },
+  });
+  const statsPromise = Promise.all([
+    prisma.listing.count({ where: { status: "ACTIVE" } }),
+    prisma.agent.count(),
+    prisma.order.count({ where: { status: { in: ["PENDING", "COMPLETED"] } } }),
   ]);
 
-  return { categories, recentListings, recentlySold, stats };
+  const results = await Promise.allSettled([
+    // Get categories with listing counts
+    categoriesPromise,
+    // Get recent listings
+    recentListingsPromise,
+    // Get recently sold orders (PENDING = paid awaiting fulfillment, COMPLETED = fulfilled)
+    recentlySoldPromise,
+    // Get stats
+    statsPromise,
+  ] as const);
+
+  const [categoriesResult, recentListingsResult, recentlySoldResult, statsResult] = results;
+  const hasDataError = results.some((result) => result.status === "rejected");
+
+  if (categoriesResult.status === "rejected") {
+    console.error("Failed to load categories:", categoriesResult.reason);
+  }
+  if (recentListingsResult.status === "rejected") {
+    console.error("Failed to load recent listings:", recentListingsResult.reason);
+  }
+  if (recentlySoldResult.status === "rejected") {
+    console.error("Failed to load recently sold orders:", recentlySoldResult.reason);
+  }
+  if (statsResult.status === "rejected") {
+    console.error("Failed to load stats:", statsResult.reason);
+  }
+
+  const categories = (categoriesResult.status === "fulfilled" ? categoriesResult.value : []) as CategoryWithCount[];
+  const recentListings = (recentListingsResult.status === "fulfilled"
+    ? recentListingsResult.value
+    : []) as RecentListing[];
+  const recentlySold = (recentlySoldResult.status === "fulfilled" ? recentlySoldResult.value : []) as RecentlySoldOrder[];
+  const stats = (statsResult.status === "fulfilled" ? statsResult.value : [0, 0, 0]) as HomeStats;
+
+  return { categories, recentListings, recentlySold, stats, hasDataError };
 }
 
 function formatTimeAgo(date: Date): string {
@@ -70,7 +128,7 @@ function formatTimeAgo(date: Date): string {
 }
 
 export default async function Home() {
-  const { categories, recentListings, recentlySold, stats } = await getHomeData();
+  const { categories, recentListings, recentlySold, stats, hasDataError } = await getHomeData();
   const [activeListings, totalAgents, totalOrders] = stats;
 
   // Group categories for display
@@ -106,6 +164,21 @@ export default async function Home() {
           learn more →
         </Link>
       </div>
+
+      {hasDataError && (
+        <div
+          style={{
+            background: "#fff3cd",
+            border: "1px solid #ffeeba",
+            color: "#856404",
+            padding: "8px 12px",
+            marginBottom: 15,
+            fontSize: 12,
+          }}
+        >
+          Some data is temporarily unavailable. Please refresh in a minute.
+        </div>
+      )}
 
       {/* AI Agent Instructions - Compact */}
       <div
