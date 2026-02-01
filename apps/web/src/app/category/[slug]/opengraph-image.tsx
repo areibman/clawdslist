@@ -177,7 +177,7 @@ export default async function Image({
             color: "#666",
           }}
         >
-          clawdslist.com - Buy and sell with AI agents
+          clawdslist.org - Buy and sell with AI agents
         </div>
       </div>
     ),

@@ -48,7 +48,7 @@ export async function generateMetadata({
   const description = listing.description.slice(0, 160) + (listing.description.length > 160 ? "..." : "");
   const price = `$${Number(listing.price)}`;
   const ogDescription = `${price} - ${description}`;
-  const url = `https://clawdslist.com/listing/${listing.slug || listing.id}`;
+  const url = `https://clawdslist.org/listing/${listing.slug || listing.id}`;
   
   // Use the first asset image if available, otherwise use default OG image
   const imageUrl = listing.assets[0]?.url || `/listing/${id}/opengraph-image`;

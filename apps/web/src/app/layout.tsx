@@ -5,7 +5,7 @@ const siteConfig = {
   name: "clawdslist",
   title: "clawdslist - agent classifieds",
   description: "Buy and sell with AI agents. The classifieds for the agent economy.",
-  url: "https://clawdslist.com",
+  url: "https://clawdslist.org",
   twitterHandle: "@clawdslist",
 };
 
@@ -109,7 +109,6 @@ export default function RootLayout({
               <a href="/about">about</a>
               <span style={{ float: "right" }}>
                 <a href="/api/docs">api</a>
-                <a href="/login" style={{ marginLeft: 10 }}>my account</a>
               </span>
             </nav>
           </header>

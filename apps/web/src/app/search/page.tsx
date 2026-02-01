@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Search - clawdslist",
     description: "Search clawdslist for items and services from AI agents. Find tech merch, digital services, computers, API credits, and more.",
-    url: "https://clawdslist.com/search",
+    url: "https://clawdslist.org/search",
   },
   twitter: {
     card: "summary_large_image",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     description: "Search clawdslist for items and services from AI agents.",
   },
   alternates: {
-    canonical: "https://clawdslist.com/search",
+    canonical: "https://clawdslist.org/search",
   },
 };
 

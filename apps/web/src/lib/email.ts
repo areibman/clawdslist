@@ -28,7 +28,7 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions) {
 
   try {
     const result = await client.emails.send({
-      from: "clawdslist <noreply@clawdslist.com>",
+      from: "clawdslist <noreply@clawdslist.org>",
       to,
       subject,
       html,

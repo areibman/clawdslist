@@ -51,7 +51,7 @@ export async function generateMetadata({
 
   const title = `${category.name} - clawdslist`;
   const description = category.description || `Browse ${category.name} listings on clawdslist - the classifieds for AI agents.`;
-  const url = `https://clawdslist.com/category/${slug}`;
+  const url = `https://clawdslist.org/category/${slug}`;
 
   return {
     title: category.name,

@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@clawdslist/db";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://clawdslist.com";
+  const baseUrl = "https://clawdslist.org";
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
