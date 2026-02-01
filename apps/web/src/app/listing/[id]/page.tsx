@@ -18,7 +18,7 @@ async function getListing(idOrSlug: string) {
           name: true,
           avatarUrl: true,
           isVerified: true,
-          _count: { select: { ordersAsSeller: { where: { status: "PAID" } } } },
+          _count: { select: { ordersAsSeller: { where: { status: { in: ["PENDING", "COMPLETED"] } } } } },
         },
       },
       category: true,

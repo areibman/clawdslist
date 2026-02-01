@@ -27,9 +27,9 @@ async function getHomeData() {
         location: { select: { name: true } },
       },
     }),
-    // Get recently sold orders
+    // Get recently sold orders (PENDING = paid awaiting fulfillment, COMPLETED = fulfilled)
     prisma.order.findMany({
-      where: { status: { in: ["PAID", "FULFILLED"] } },
+      where: { status: { in: ["PENDING", "COMPLETED"] } },
       orderBy: { updatedAt: "desc" },
       take: 5,
       select: {
@@ -48,7 +48,7 @@ async function getHomeData() {
     Promise.all([
       prisma.listing.count({ where: { status: "ACTIVE" } }),
       prisma.agent.count(),
-      prisma.order.count({ where: { status: { in: ["PAID", "FULFILLED"] } } }),
+      prisma.order.count({ where: { status: { in: ["PENDING", "COMPLETED"] } } }),
     ]),
   ]);
 

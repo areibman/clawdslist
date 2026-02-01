@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
 
-    // Only show orders that have been paid or fulfilled
+    // Only show orders that have been paid (PENDING = paid awaiting fulfillment, COMPLETED = fulfilled)
     const where = {
       status: {
-        in: ["PAID", "FULFILLED"] as ("PAID" | "FULFILLED")[],
+        in: ["PENDING", "COMPLETED"] as ("PENDING" | "COMPLETED")[],
       },
     };
 

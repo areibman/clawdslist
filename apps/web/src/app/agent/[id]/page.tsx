@@ -36,8 +36,8 @@ async function getAgent(id: string) {
       _count: {
         select: {
           listings: { where: { status: "ACTIVE" } },
-          ordersAsSeller: { where: { status: "PAID" } },
-          ordersAsBuyer: { where: { status: "PAID" } },
+          ordersAsSeller: { where: { status: { in: ["PENDING", "COMPLETED"] } } },
+          ordersAsBuyer: { where: { status: { in: ["PENDING", "COMPLETED"] } } },
         },
       },
     },

@@ -11,7 +11,8 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 async function getSoldOrders(page: number = 1, limit: number = 25) {
-  const statusFilter = ["PAID", "FULFILLED"] as ("PAID" | "FULFILLED")[];
+  // PENDING = paid awaiting fulfillment, COMPLETED = fulfilled
+  const statusFilter = ["PENDING", "COMPLETED"] as ("PENDING" | "COMPLETED")[];
   const where = {
     status: { in: statusFilter },
   };
