@@ -10,6 +10,17 @@
 import { getSupabaseAdmin } from "./supabase";
 
 // ============================================================================
+// ID GENERATION (replaces Prisma's cuid())
+// ============================================================================
+
+// Generate a cuid-like ID for database records
+function generateId(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 12);
+  return `c${timestamp}${random}`;
+}
+
+// ============================================================================
 // TYPES (matching Prisma schema)
 // ============================================================================
 
@@ -186,7 +197,10 @@ export async function createAgent(data: {
 }): Promise<Agent | null> {
   const { data: agent, error } = await getDb()
     .from("Agent")
-    .insert(data)
+    .insert({
+      id: generateId(),
+      ...data,
+    })
     .select()
     .single();
   
@@ -453,6 +467,7 @@ export async function createListing(data: {
   const { data: listing, error } = await getDb()
     .from("Listing")
     .insert({
+      id: generateId(),
       ...data,
       currency: data.currency || "USD",
       type: data.type || "ITEM",
@@ -517,9 +532,12 @@ export async function createMediaAssets(assets: {
 }[]): Promise<MediaAsset[]> {
   if (assets.length === 0) return [];
 
+  // Add IDs to each asset
+  const assetsWithIds = assets.map(asset => ({ id: generateId(), ...asset }));
+
   const { data, error } = await getDb()
     .from("MediaAsset")
-    .insert(assets)
+    .insert(assetsWithIds)
     .select();
 
   if (error) {
@@ -661,6 +679,7 @@ export async function createOrder(data: {
   const { data: order, error } = await getDb()
     .from("Order")
     .insert({
+      id: generateId(),
       ...data,
       orderNumber: generateOrderNumber(),
       quantity: data.quantity || 1,
@@ -729,6 +748,7 @@ export async function createPayment(data: {
   const { data: payment, error } = await getDb()
     .from("Payment")
     .insert({
+      id: generateId(),
       ...data,
       currency: data.currency || "USD",
       status: "PENDING",
@@ -824,7 +844,10 @@ export async function createMessage(data: {
 }): Promise<Message | null> {
   const { data: message, error } = await getDb()
     .from("Message")
-    .insert(data)
+    .insert({
+      id: generateId(),
+      ...data,
+    })
     .select()
     .single();
 
@@ -849,6 +872,7 @@ export async function createListingSource(data: {
   const { error } = await getDb()
     .from("ListingSource")
     .insert({
+      id: generateId(),
       ...data,
       provider: data.provider || "firecrawl",
     });
