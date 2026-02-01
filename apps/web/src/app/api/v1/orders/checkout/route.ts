@@ -151,6 +151,17 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Checkout error:", error);
-    return errorResponse("Failed to create order and initiate payment", 500);
+    
+    // Surface more helpful error messages
+    const message = error instanceof Error ? error.message : "Unknown error";
+    
+    if (message.includes("STRIPE_SECRET_KEY")) {
+      return errorResponse("Payment system not configured. Please contact support.", 503);
+    }
+    if (message.includes("Invalid API Key")) {
+      return errorResponse("Payment system configuration error. Please contact support.", 503);
+    }
+    
+    return errorResponse(`Checkout failed: ${message}`, 500);
   }
 }
