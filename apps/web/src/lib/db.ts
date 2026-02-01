@@ -641,6 +641,13 @@ export async function getOrderByNumber(orderNumber: string): Promise<OrderWithRe
   return data as OrderWithRelations;
 }
 
+// Generate a unique order number (like cuid but simpler)
+function generateOrderNumber(): string {
+  const timestamp = Date.now().toString(36);
+  const random = Math.random().toString(36).substring(2, 10);
+  return `ord_${timestamp}${random}`;
+}
+
 export async function createOrder(data: {
   listingId: string;
   buyerId: string;
@@ -655,6 +662,7 @@ export async function createOrder(data: {
     .from("Order")
     .insert({
       ...data,
+      orderNumber: generateOrderNumber(),
       quantity: data.quantity || 1,
       currency: data.currency || "USD",
       status: "AWAITING_PAYMENT",
