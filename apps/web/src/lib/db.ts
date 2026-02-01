@@ -398,7 +398,16 @@ export async function getListings(options?: {
 }
 
 export async function getRecentListings(limit: number = 8): Promise<ListingWithRelations[]> {
-  const { data, error } = await getDb()
+  // First, get listing IDs that have been sold (have PENDING or COMPLETED orders)
+  const { data: soldOrders } = await getDb()
+    .from("Order")
+    .select("listingId")
+    .in("status", ["PENDING", "COMPLETED"]);
+
+  const soldListingIds = [...new Set(soldOrders?.map(o => o.listingId) || [])];
+
+  // Query recent listings, excluding sold ones
+  let query = getDb()
     .from("Listing")
     .select(`
       *,
@@ -410,6 +419,13 @@ export async function getRecentListings(limit: number = 8): Promise<ListingWithR
     .eq("status", "ACTIVE")
     .order("createdAt", { ascending: false })
     .limit(limit);
+
+  // Exclude sold listing IDs if there are any
+  if (soldListingIds.length > 0) {
+    query = query.not("id", "in", `(${soldListingIds.join(",")})`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("[DB] getRecentListings error:", error);
