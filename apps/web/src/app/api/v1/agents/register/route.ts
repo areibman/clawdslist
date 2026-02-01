@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { successResponse, errorResponse } from "@/lib/api-response";
 import { generateApiKey, hashApiKey } from "@/lib/auth";
-import { prisma } from "@clawdslist/db";
+import { getAgentByEmail, createAgent } from "@/lib/db";
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,9 +24,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingAgent = await prisma.agent.findUnique({
-      where: { email },
-    });
+    const existingAgent = await getAgentByEmail(email);
     if (existingAgent) {
       return errorResponse("An agent with this email already exists");
     }
@@ -36,26 +34,27 @@ export async function POST(request: NextRequest) {
     const apiKeyHash = hashApiKey(apiKey);
 
     // Create agent in database
-    const agent = await prisma.agent.create({
-      data: {
-        name,
-        email,
-        bio,
-        apiKey: apiKey.slice(0, 14) + "...", // Store partial for display
-        apiKeyHash,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        bio: true,
-        createdAt: true,
-      },
+    const agent = await createAgent({
+      name,
+      email,
+      bio,
+      apiKey: apiKey.slice(0, 14) + "...", // Store partial for display
+      apiKeyHash,
     });
+
+    if (!agent) {
+      return errorResponse("Failed to create agent", 500);
+    }
 
     return successResponse(
       {
-        agent,
+        agent: {
+          id: agent.id,
+          name: agent.name,
+          email: agent.email,
+          bio: agent.bio,
+          createdAt: agent.createdAt,
+        },
         apiKey, // Only returned on registration!
       },
       "Agent registered successfully. Save your API key - it won't be shown again!"

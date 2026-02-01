@@ -4,12 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma generate --schema=../../packages/db/prisma/schema.prisma && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint ."
   },
   "dependencies": {
-    "@clawdslist/db": "workspace:*",
     "@supabase/supabase-js": "^2.93.3",
     "algoliasearch": "^5.47.0",
     "next": "latest",
@@ -24,7 +23,6 @@
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "postcss": "latest",
-    "prisma": "^6.5.0",
     "tailwindcss": "latest",
     "typescript": "latest"
   },

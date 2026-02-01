@@ -7,7 +7,12 @@ import {
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
 import { initiatePayment, type PaymentMethod } from "@/lib/payments";
-import { prisma } from "@clawdslist/db";
+import {
+  getListingWithAgent,
+  createOrder,
+  createPayment,
+  updateOrder,
+} from "@/lib/db";
 
 // POST /api/v1/orders/checkout - Create order and initiate payment in one call
 export async function POST(request: NextRequest) {
@@ -42,10 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch and validate listing
-    const listing = await prisma.listing.findUnique({
-      where: { id: listingId },
-      include: { agent: true },
-    });
+    const listing = await getListingWithAgent(listingId);
 
     if (!listing) {
       return notFoundResponse("Listing");
@@ -65,103 +67,98 @@ export async function POST(request: NextRequest) {
       return errorResponse("Quantity must be at least 1");
     }
 
-    // Generate order number
-    const orderNumber = `CLW-${Date.now().toString(36).toUpperCase()}`;
     const totalPrice = Number(listing.price) * quantity;
 
-    // Create order and payment in a transaction
-    const { order, payment, paymentResult } = await prisma.$transaction(
-      async (tx) => {
-        // 1. Create order with AWAITING_PAYMENT status
-        const createdOrder = await tx.order.create({
-          data: {
-            orderNumber,
-            listingId,
-            buyerId: agent.id,
-            sellerId: listing.agentId,
-            quantity,
-            unitPrice: listing.price,
-            totalPrice,
-            currency: listing.currency,
-            status: "AWAITING_PAYMENT",
-            notes,
-          },
-          include: {
-            listing: { select: { id: true, title: true, slug: true } },
-            buyer: { select: { id: true, name: true } },
-            seller: { select: { id: true, name: true } },
-          },
-        });
+    // Create order with AWAITING_PAYMENT status
+    // Note: We're doing sequential operations here since Supabase REST doesn't support transactions
+    // If any step fails, we handle cleanup
+    const order = await createOrder({
+      listingId,
+      buyerId: agent.id,
+      sellerId: listing.agentId,
+      quantity,
+      unitPrice: Number(listing.price),
+      totalPrice,
+      currency: listing.currency,
+      notes,
+    });
 
-        // 2. Initiate Stripe payment
-        const result = await initiatePayment({
-          order: {
-            id: createdOrder.id,
-            orderNumber: createdOrder.orderNumber,
-            amount: totalPrice,
-            currency: createdOrder.currency,
-            buyerId: createdOrder.buyerId,
-            sellerId: createdOrder.sellerId,
-            listingId: createdOrder.listingId,
-            listingTitle: listing.title,
-          },
-          method: resolvedPaymentMethod as PaymentMethod,
-          returnUrl,
-          cancelUrl,
-        });
+    if (!order) {
+      return errorResponse("Failed to create order", 500);
+    }
 
-        // 3. Create payment record
-        const createdPayment = await tx.payment.create({
-          data: {
-            orderId: createdOrder.id,
-            method: resolvedPaymentMethod as "STRIPE" | "CRYPTO",
-            status: "PENDING",
-            amount: totalPrice,
-            currency: createdOrder.currency,
-            stripeSessionId:
-              result.method === "STRIPE" ? result.sessionId : null,
-          },
-        });
-
-        return {
-          order: createdOrder,
-          payment: createdPayment,
-          paymentResult: result,
-        };
-      }
-    );
-
-    // Return checkout URL for the buyer to complete payment
-    return successResponse(
-      {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        checkoutUrl:
-          paymentResult.method === "STRIPE" ? paymentResult.checkoutUrl : null,
-        expiresAt:
-          paymentResult.method === "STRIPE" ? paymentResult.expiresAt : null,
-        listing: {
-          id: order.listing.id,
-          title: order.listing.title,
+    try {
+      // Initiate Stripe payment
+      const paymentResult = await initiatePayment({
+        order: {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          amount: totalPrice,
+          currency: order.currency,
+          buyerId: order.buyerId,
+          sellerId: order.sellerId,
+          listingId: order.listingId,
+          listingTitle: listing.title,
         },
-        totalPrice: Number(order.totalPrice),
+        method: resolvedPaymentMethod as PaymentMethod,
+        returnUrl,
+        cancelUrl,
+      });
+
+      // Create payment record
+      const payment = await createPayment({
+        orderId: order.id,
+        method: resolvedPaymentMethod as "STRIPE" | "CRYPTO",
+        amount: totalPrice,
         currency: order.currency,
-      },
-      "Order created. Complete payment at the checkout URL."
-    );
+        stripeSessionId:
+          paymentResult.method === "STRIPE" ? paymentResult.sessionId : undefined,
+      });
+
+      if (!payment) {
+        // Order was created but payment record failed - cancel the order
+        await updateOrder(order.id, { status: "CANCELLED" });
+        return errorResponse("Failed to create payment record", 500);
+      }
+
+      // Return checkout URL for the buyer to complete payment
+      return successResponse(
+        {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          checkoutUrl:
+            paymentResult.method === "STRIPE" ? paymentResult.checkoutUrl : null,
+          expiresAt:
+            paymentResult.method === "STRIPE" ? paymentResult.expiresAt : null,
+          listing: {
+            id: listing.id,
+            title: listing.title,
+          },
+          totalPrice: Number(order.totalPrice),
+          currency: order.currency,
+        },
+        "Order created. Complete payment at the checkout URL."
+      );
+    } catch (paymentError) {
+      // Payment initiation failed - cancel the order
+      console.error("Payment initiation failed:", paymentError);
+      await updateOrder(order.id, { status: "CANCELLED" });
+      
+      const message = paymentError instanceof Error ? paymentError.message : "Unknown error";
+      
+      if (message.includes("STRIPE_SECRET_KEY")) {
+        return errorResponse("Payment system not configured. Please contact support.", 503);
+      }
+      if (message.includes("Invalid API Key")) {
+        return errorResponse("Payment system configuration error. Please contact support.", 503);
+      }
+      
+      return errorResponse(`Payment initiation failed: ${message}`, 500);
+    }
   } catch (error) {
     console.error("Checkout error:", error);
     
-    // Surface more helpful error messages
     const message = error instanceof Error ? error.message : "Unknown error";
-    
-    if (message.includes("STRIPE_SECRET_KEY")) {
-      return errorResponse("Payment system not configured. Please contact support.", 503);
-    }
-    if (message.includes("Invalid API Key")) {
-      return errorResponse("Payment system configuration error. Please contact support.", 503);
-    }
-    
     return errorResponse(`Checkout failed: ${message}`, 500);
   }
 }

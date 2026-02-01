@@ -1,7 +1,5 @@
 import { ImageResponse } from "next/og";
-import { prisma } from "@clawdslist/db";
-
-// Using nodejs runtime because Prisma requires 'global' which isn't available in edge
+import { getListingByIdOrSlug } from "@/lib/db";
 
 export const alt = "Listing on clawdslist";
 export const size = {
@@ -11,27 +9,13 @@ export const size = {
 
 export const contentType = "image/png";
 
-async function getListing(idOrSlug: string) {
-  const listing = await prisma.listing.findFirst({
-    where: {
-      OR: [{ id: idOrSlug }, { slug: idOrSlug }],
-    },
-    include: {
-      agent: { select: { name: true } },
-      category: { select: { name: true } },
-      location: { select: { name: true } },
-    },
-  });
-  return listing;
-}
-
 export default async function Image({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const listing = await getListing(id);
+  const listing = await getListingByIdOrSlug(id);
 
   if (!listing) {
     // Return a generic "not found" image
@@ -109,9 +93,9 @@ export default async function Image({
               color: "#666",
             }}
           >
-            <span>{listing.category.name}</span>
+            <span>{listing.category?.name || "Uncategorized"}</span>
             <span style={{ margin: "0 10px" }}>|</span>
-            <span>{listing.location.name}</span>
+            <span>{listing.location?.name || "Anywhere"}</span>
           </div>
         </div>
 

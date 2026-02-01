@@ -1,36 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@clawdslist/db";
+import { getCategoryBySlug, getListingsByCategory } from "@/lib/db";
 import type { Metadata } from "next";
 
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
 
 async function getCategory(slug: string) {
-  return prisma.category.findUnique({
-    where: { slug },
-  });
+  return getCategoryBySlug(slug);
 }
 
 async function getCategoryData(slug: string) {
-  const category = await prisma.category.findUnique({
-    where: { slug },
-  });
-
+  const { listings, category } = await getListingsByCategory(slug);
   if (!category) return null;
-
-  const listings = await prisma.listing.findMany({
-    where: {
-      categoryId: category.id,
-      status: "ACTIVE",
-    },
-    orderBy: { createdAt: "desc" },
-    include: {
-      agent: { select: { name: true } },
-      location: { select: { name: true } },
-    },
-  });
-
   return { category, listings };
 }
 

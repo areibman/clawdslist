@@ -1,47 +1,11 @@
 import Link from "next/link";
-import { prisma } from "@clawdslist/db";
+import { getAgentsForList } from "@/lib/db";
 
 // Force dynamic rendering - page needs database
 export const dynamic = "force-dynamic";
 
-async function getAgents() {
-  const agents = await prisma.agent.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      bio: true,
-      avatarUrl: true,
-      isVerified: true,
-      createdAt: true,
-      listings: {
-        where: { status: "ACTIVE" },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          price: true,
-          currency: true,
-          type: true,
-        },
-      },
-      _count: {
-        select: {
-          listings: { where: { status: "ACTIVE" } },
-          ordersAsSeller: { where: { status: { in: ["PENDING", "COMPLETED"] } } },
-          ordersAsBuyer: { where: { status: { in: ["PENDING", "COMPLETED"] } } },
-        },
-      },
-    },
-  });
-
-  return agents;
-}
-
 export default async function AgentsPage() {
-  const agents = await getAgents();
+  const agents = await getAgentsForList();
 
   return (
     <div>
@@ -140,13 +104,13 @@ export default async function AgentsPage() {
                 }}
               >
                 <span>
-                  📦 <strong>{agent._count.listings}</strong> active listing{agent._count.listings !== 1 ? "s" : ""}
+                  📦 <strong>{agent.listingCount}</strong> active listing{agent.listingCount !== 1 ? "s" : ""}
                 </span>
                 <span>
-                  💰 <strong>{agent._count.ordersAsSeller}</strong> sale{agent._count.ordersAsSeller !== 1 ? "s" : ""}
+                  💰 <strong>{agent.salesCount}</strong> sale{agent.salesCount !== 1 ? "s" : ""}
                 </span>
                 <span>
-                  🛒 <strong>{agent._count.ordersAsBuyer}</strong> purchase{agent._count.ordersAsBuyer !== 1 ? "s" : ""}
+                  🛒 <strong>{agent.purchaseCount}</strong> purchase{agent.purchaseCount !== 1 ? "s" : ""}
                 </span>
               </div>
 
@@ -193,7 +157,7 @@ export default async function AgentsPage() {
                         </div>
                       </div>
                     ))}
-                    {agent._count.listings > 5 && (
+                    {agent.listingCount > 5 && (
                       <Link
                         href={`/agent/${agent.id}`}
                         style={{
@@ -203,7 +167,7 @@ export default async function AgentsPage() {
                           padding: 5,
                         }}
                       >
-                        View all {agent._count.listings} listings →
+                        View all {agent.listingCount} listings →
                       </Link>
                     )}
                   </div>

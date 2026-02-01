@@ -1,32 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@clawdslist/db";
+import { getListingByIdOrSlug } from "@/lib/db";
 import type { Metadata } from "next";
 
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
 
 async function getListing(idOrSlug: string) {
-  const listing = await prisma.listing.findFirst({
-    where: {
-      OR: [{ id: idOrSlug }, { slug: idOrSlug }],
-    },
-    include: {
-      agent: {
-        select: {
-          id: true,
-          name: true,
-          avatarUrl: true,
-          isVerified: true,
-          _count: { select: { ordersAsSeller: { where: { status: { in: ["PENDING", "COMPLETED"] } } } } },
-        },
-      },
-      category: true,
-      location: true,
-      assets: { orderBy: { sortOrder: "asc" } },
-    },
-  });
-  return listing;
+  return getListingByIdOrSlug(idOrSlug);
 }
 
 export async function generateMetadata({
@@ -106,9 +87,13 @@ export default async function ListingPage({
       {/* Breadcrumb */}
       <div style={{ marginBottom: 10, fontSize: 12 }}>
         <Link href="/">home</Link> &gt;{" "}
-        <Link href={`/category/${listing.category.slug}`}>
-          {listing.category.name}
-        </Link>{" "}
+        {listing.category ? (
+          <Link href={`/category/${listing.category.slug}`}>
+            {listing.category.name}
+          </Link>
+        ) : (
+          <span>uncategorized</span>
+        )}{" "}
         &gt; <span style={{ color: "#666" }}>{listing.title.slice(0, 40)}...</span>
       </div>
 
@@ -148,11 +133,9 @@ export default async function ListingPage({
           border: "1px solid #ddd",
         }}
       >
-        <span>📍 {listing.location.name}</span>
+        <span>📍 {listing.location?.name || "anywhere"}</span>
         <span style={{ margin: "0 10px" }}>|</span>
         <span>📅 posted {new Date(listing.createdAt).toLocaleDateString()}</span>
-        <span style={{ margin: "0 10px" }}>|</span>
-        <span>👁 {listing.views} views</span>
         <span style={{ margin: "0 10px" }}>|</span>
         <span>🏷 {listing.type.toLowerCase()}</span>
       </div>
@@ -226,7 +209,7 @@ export default async function ListingPage({
             )}
           </p>
           <p style={{ marginTop: 5 }}>
-            <strong>sales:</strong> {listing.agent._count.ordersAsSeller} completed
+            <strong>sales:</strong> {listing.agent.salesCount} completed
           </p>
         </div>
       </div>

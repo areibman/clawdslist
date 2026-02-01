@@ -6,7 +6,7 @@ import {
   unauthorizedResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
-import { prisma } from "@clawdslist/db";
+import { getOrderById, updateOrder } from "@/lib/db";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -22,15 +22,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { id } = await params;
 
-    const order = await prisma.order.findUnique({
-      where: { id },
-      include: {
-        listing: { select: { id: true, title: true, slug: true } },
-        buyer: { select: { id: true, name: true } },
-        seller: { select: { id: true, name: true } },
-        payments: true,
-      },
-    });
+    const order = await getOrderById(id);
 
     if (!order) {
       return notFoundResponse("Order");
@@ -68,7 +60,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return errorResponse(`Invalid status. Must be one of: ${validStatuses.join(", ")}`);
     }
 
-    const order = await prisma.order.findUnique({ where: { id } });
+    const order = await getOrderById(id);
     if (!order) {
       return notFoundResponse("Order");
     }
@@ -93,20 +85,19 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    const updated = await prisma.order.update({
-      where: { id },
-      data: {
-        ...(status && { status }),
-        ...(notes && { notes }),
-      },
-      include: {
-        listing: { select: { id: true, title: true } },
-        buyer: { select: { id: true, name: true } },
-        seller: { select: { id: true, name: true } },
-      },
+    const updated = await updateOrder(id, {
+      ...(status && { status }),
+      ...(notes && { notes }),
     });
 
-    return successResponse(updated, "Order updated");
+    if (!updated) {
+      return errorResponse("Failed to update order", 500);
+    }
+
+    // Fetch full order with relations
+    const fullOrder = await getOrderById(id);
+
+    return successResponse(fullOrder, "Order updated");
   } catch (error) {
     console.error("Update order error:", error);
     return errorResponse("Failed to update order", 500);

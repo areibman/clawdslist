@@ -7,7 +7,13 @@ import {
   notFoundResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
-import { prisma, Prisma } from "@clawdslist/db";
+import {
+  getOrdersForAgent,
+  getListingWithAgent,
+  createOrder,
+  getOrderById,
+  type OrderStatus,
+} from "@/lib/db";
 
 // GET /api/v1/orders - List agent's orders (requires auth)
 export async function GET(request: NextRequest) {
@@ -20,36 +26,15 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
-    const role = url.searchParams.get("role"); // "buyer" | "seller" | null (both)
-    const status = url.searchParams.get("status");
+    const role = url.searchParams.get("role") as "buyer" | "seller" | null;
+    const status = url.searchParams.get("status") as OrderStatus | null;
 
-    // Build where clause
-    const whereConditions: Prisma.OrderWhereInput[] = [];
-    if (role !== "seller") {
-      whereConditions.push({ buyerId: agent.id });
-    }
-    if (role !== "buyer") {
-      whereConditions.push({ sellerId: agent.id });
-    }
-
-    const where: Prisma.OrderWhereInput = {
-      OR: whereConditions.length > 0 ? whereConditions : [{ buyerId: agent.id }, { sellerId: agent.id }],
-      ...(status && { status: status as any }),
-    };
-
-    const total = await prisma.order.count({ where });
-
-    const orders = await prisma.order.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      include: {
-        listing: { select: { id: true, title: true, slug: true } },
-        buyer: { select: { id: true, name: true } },
-        seller: { select: { id: true, name: true } },
-        payments: { select: { id: true, status: true, method: true } },
-      },
+    const { orders, total } = await getOrdersForAgent({
+      agentId: agent.id,
+      role: role || "both",
+      status: status || undefined,
+      page,
+      limit,
     });
 
     return paginatedResponse(orders, page, limit, total);
@@ -76,10 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate listing exists and is available
-    const listing = await prisma.listing.findUnique({
-      where: { id: listingId },
-      include: { agent: true },
-    });
+    const listing = await getListingWithAgent(listingId);
 
     if (!listing) {
       return notFoundResponse("Listing");
@@ -94,33 +76,30 @@ export async function POST(request: NextRequest) {
       return errorResponse("Requested quantity exceeds available stock");
     }
 
-    const orderNumber = `CLW-${Date.now().toString(36).toUpperCase()}`;
     const totalPrice = Number(listing.price) * quantity;
 
     // Create order with AWAITING_PAYMENT status
     // Note: Listing quantity is NOT decremented here - it happens when payment completes
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        listingId,
-        buyerId: agent.id,
-        sellerId: listing.agentId,
-        quantity,
-        unitPrice: listing.price,
-        totalPrice,
-        currency: listing.currency,
-        status: "AWAITING_PAYMENT",
-        notes,
-      },
-      include: {
-        listing: { select: { id: true, title: true, slug: true } },
-        buyer: { select: { id: true, name: true } },
-        seller: { select: { id: true, name: true } },
-      },
+    const order = await createOrder({
+      listingId,
+      buyerId: agent.id,
+      sellerId: listing.agentId,
+      quantity,
+      unitPrice: Number(listing.price),
+      totalPrice,
+      currency: listing.currency,
+      notes,
     });
 
+    if (!order) {
+      return errorResponse("Failed to create order", 500);
+    }
+
+    // Fetch full order with relations
+    const fullOrder = await getOrderById(order.id);
+
     return successResponse(
-      order,
+      fullOrder,
       "Order created. Call POST /api/v1/orders/{id}/pay to initiate payment, or use POST /api/v1/orders/checkout for a combined flow."
     );
   } catch (error) {

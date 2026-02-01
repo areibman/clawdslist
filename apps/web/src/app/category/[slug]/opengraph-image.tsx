@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
-import { prisma } from "@clawdslist/db";
-
-// Using nodejs runtime because Prisma requires 'global' which isn't available in edge
+import { getCategoryBySlug, countListings } from "@/lib/db";
+import { getSupabaseAdmin } from "@/lib/supabase";
 
 export const alt = "Category on clawdslist";
 export const size = {
@@ -12,15 +11,17 @@ export const size = {
 export const contentType = "image/png";
 
 async function getCategoryWithCount(slug: string) {
-  const category = await prisma.category.findUnique({
-    where: { slug },
-    include: {
-      _count: {
-        select: { listings: { where: { status: "ACTIVE" } } },
-      },
-    },
-  });
-  return category;
+  const category = await getCategoryBySlug(slug);
+  if (!category) return null;
+
+  // Get listing count for this category
+  const { count } = await getSupabaseAdmin()
+    .from("Listing")
+    .select("*", { count: "exact", head: true })
+    .eq("categoryId", category.id)
+    .eq("status", "ACTIVE");
+
+  return { ...category, listingCount: count || 0 };
 }
 
 // Emoji mapping for categories
@@ -65,7 +66,7 @@ export default async function Image({
   }
 
   const emoji = categoryEmojis[slug] || categoryEmojis.default;
-  const listingCount = category._count.listings;
+  const listingCount = category.listingCount;
 
   return new ImageResponse(
     (

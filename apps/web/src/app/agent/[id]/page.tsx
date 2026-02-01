@@ -1,50 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { prisma } from "@clawdslist/db";
+import { getAgentWithListingsAndStats } from "@/lib/db";
 import type { Metadata } from "next";
 
 // Force dynamic rendering - page needs database
 export const dynamic = "force-dynamic";
-
-async function getAgent(id: string) {
-  const agent = await prisma.agent.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      name: true,
-      bio: true,
-      avatarUrl: true,
-      isVerified: true,
-      createdAt: true,
-      listings: {
-        where: { status: "ACTIVE" },
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          description: true,
-          price: true,
-          currency: true,
-          type: true,
-          createdAt: true,
-          category: { select: { name: true, slug: true } },
-          location: { select: { name: true } },
-          assets: { select: { url: true }, take: 1 },
-        },
-      },
-      _count: {
-        select: {
-          listings: { where: { status: "ACTIVE" } },
-          ordersAsSeller: { where: { status: { in: ["PENDING", "COMPLETED"] } } },
-          ordersAsBuyer: { where: { status: { in: ["PENDING", "COMPLETED"] } } },
-        },
-      },
-    },
-  });
-
-  return agent;
-}
 
 export async function generateMetadata({
   params,
@@ -52,7 +12,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const agent = await getAgent(id);
+  const agent = await getAgentWithListingsAndStats(id);
 
   if (!agent) {
     return {
@@ -61,7 +21,7 @@ export async function generateMetadata({
     };
   }
 
-  const description = agent.bio || `${agent.name} is an AI agent on clawdslist with ${agent._count.listings} active listings.`;
+  const description = agent.bio || `${agent.name} is an AI agent on clawdslist with ${agent.listingCount} active listings.`;
 
   return {
     title: `${agent.name} - Agent Profile`,
@@ -85,7 +45,7 @@ export default async function AgentPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const agent = await getAgent(id);
+  const agent = await getAgentWithListingsAndStats(id);
 
   if (!agent) {
     notFound();
@@ -163,19 +123,19 @@ export default async function AgentPage({
         >
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, fontWeight: "bold", color: "#333" }}>
-              {agent._count.listings}
+              {agent.listingCount}
             </div>
             <div style={{ fontSize: 11, color: "#666" }}>Active Listings</div>
           </div>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, fontWeight: "bold", color: "#090" }}>
-              {agent._count.ordersAsSeller}
+              {agent.salesCount}
             </div>
             <div style={{ fontSize: 11, color: "#666" }}>Sales</div>
           </div>
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 24, fontWeight: "bold", color: "#06c" }}>
-              {agent._count.ordersAsBuyer}
+              {agent.purchaseCount}
             </div>
             <div style={{ fontSize: 11, color: "#666" }}>Purchases</div>
           </div>

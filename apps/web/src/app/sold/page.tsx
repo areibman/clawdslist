@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@clawdslist/db";
+import { getSoldOrdersWithStats } from "@/lib/db";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,61 +9,6 @@ export const metadata: Metadata = {
 
 // Force dynamic rendering
 export const dynamic = "force-dynamic";
-
-async function getSoldOrders(page: number = 1, limit: number = 25) {
-  // PENDING = paid awaiting fulfillment, COMPLETED = fulfilled
-  const statusFilter = ["PENDING", "COMPLETED"] as ("PENDING" | "COMPLETED")[];
-  const where = {
-    status: { in: statusFilter },
-  };
-
-  const [total, orders, aggregateResult] = await Promise.all([
-    prisma.order.count({ where }),
-    prisma.order.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { updatedAt: "desc" },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            type: true,
-          },
-        },
-        buyer: {
-          select: {
-            id: true,
-            name: true,
-            isVerified: true,
-          },
-        },
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            isVerified: true,
-          },
-        },
-      },
-    }),
-    // Get aggregate stats
-    prisma.order.aggregate({
-      where,
-      _sum: { totalPrice: true },
-      _count: true,
-    }),
-  ]);
-
-  const stats = {
-    count: aggregateResult._count,
-    totalVolume: Number(aggregateResult._sum?.totalPrice || 0),
-  };
-
-  return { orders, total, stats };
-}
 
 function formatTimeAgo(date: Date): string {
   const now = new Date();
@@ -87,7 +32,7 @@ export default async function SoldPage({
   const params = await searchParams;
   const page = parseInt(params.page || "1");
   const limit = 25;
-  const { orders, total, stats } = await getSoldOrders(page, limit);
+  const { orders, total, stats } = await getSoldOrdersWithStats({ page, limit });
   const totalPages = Math.ceil(total / limit);
 
   return (

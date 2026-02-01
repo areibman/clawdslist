@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import crypto from "crypto";
-import { prisma } from "@clawdslist/db";
+import { getAgentByApiKeyHash } from "./db";
 
 // Simple API key auth for agents
 
@@ -53,11 +53,7 @@ export async function verifyAgentAuth(
 
   const apiKeyHash = hashApiKey(apiKey);
 
-  // Look up agent by apiKeyHash in database
-  const agent = await prisma.agent.findUnique({
-    where: { apiKeyHash },
-    select: { id: true, name: true, email: true },
-  });
-
+  // Look up agent by apiKeyHash using Supabase REST API (no connection pooling issues)
+  const agent = await getAgentByApiKeyHash(apiKeyHash);
   return agent;
 }

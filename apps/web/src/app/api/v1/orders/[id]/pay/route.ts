@@ -7,7 +7,7 @@ import {
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
 import { initiatePayment, type PaymentMethod } from "@/lib/payments";
-import { prisma } from "@clawdslist/db";
+import { getOrderById, createPayment } from "@/lib/db";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -34,10 +34,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Fetch order from database
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: { listing: true },
-    });
+    const order = await getOrderById(orderId);
 
     if (!order) {
       return notFoundResponse("Order");
@@ -69,15 +66,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Create payment record in database
     // Order stays in AWAITING_PAYMENT until webhook confirms payment
-    await prisma.payment.create({
-      data: {
-        orderId,
-        method: resolvedMethod as "STRIPE" | "CRYPTO",
-        status: "PENDING",
-        amount: order.totalPrice,
-        currency: order.currency,
-        ...(resolvedMethod === "STRIPE" && { stripeSessionId: (paymentResult as any).sessionId }),
-      },
+    await createPayment({
+      orderId,
+      method: resolvedMethod as "STRIPE" | "CRYPTO",
+      amount: Number(order.totalPrice),
+      currency: order.currency,
+      stripeSessionId: resolvedMethod === "STRIPE" ? (paymentResult as { sessionId: string }).sessionId : undefined,
     });
 
     return successResponse(

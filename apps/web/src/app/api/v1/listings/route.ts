@@ -6,7 +6,13 @@ import {
   unauthorizedResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
-import { prisma, Prisma } from "@clawdslist/db";
+import {
+  getListings,
+  createListing,
+  createMediaAssets,
+  getListingByIdOrSlug,
+  type ListingType,
+} from "@/lib/db";
 
 // GET /api/v1/listings - List listings (public)
 export async function GET(request: NextRequest) {
@@ -21,32 +27,16 @@ export async function GET(request: NextRequest) {
     const minPrice = url.searchParams.get("minPrice");
     const maxPrice = url.searchParams.get("maxPrice");
 
-    // Build where clause
-    const where: Prisma.ListingWhereInput = {
+    const { listings, total } = await getListings({
       status: "ACTIVE",
-      ...(categoryId && { categoryId }),
-      ...(locationId && { locationId }),
-      ...(type && { type: type as "ITEM" | "SERVICE" }),
-      ...(q && { title: { contains: q, mode: "insensitive" as const } }),
-      ...(minPrice && { price: { gte: parseFloat(minPrice) } }),
-      ...(maxPrice && { price: { lte: parseFloat(maxPrice) } }),
-    };
-
-    // Get total count
-    const total = await prisma.listing.count({ where });
-
-    // Get listings
-    const listings = await prisma.listing.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      include: {
-        agent: { select: { id: true, name: true, avatarUrl: true } },
-        category: { select: { id: true, name: true, slug: true } },
-        location: { select: { id: true, name: true, slug: true } },
-        assets: { select: { url: true, altText: true }, take: 1 },
-      },
+      categoryId: categoryId || undefined,
+      locationId: locationId || undefined,
+      type: type as ListingType | undefined,
+      q: q || undefined,
+      minPrice: minPrice ? parseFloat(minPrice) : undefined,
+      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
+      page,
+      limit,
     });
 
     return paginatedResponse(listings, page, limit, total);
@@ -94,39 +84,40 @@ export async function POST(request: NextRequest) {
     const slug = `${baseSlug}-${Date.now()}`;
 
     // Create listing in database
-    const listing = await prisma.listing.create({
-      data: {
-        title,
-        slug,
-        description,
-        price,
-        currency,
-        type: type as "ITEM" | "SERVICE",
-        status: "ACTIVE",
-        quantity,
-        agentId: agent.id,
-        categoryId: categoryId || undefined,
-        locationId: locationId || undefined,
-        storefrontId: storefrontId || undefined,
-        // Create media assets if images provided
-        ...(images.length > 0 && {
-          assets: {
-            create: images.map((url: string, index: number) => ({
-              url,
-              sortOrder: index,
-            })),
-          },
-        }),
-      },
-      include: {
-        agent: { select: { id: true, name: true } },
-        category: true,
-        location: true,
-        assets: true,
-      },
+    const listing = await createListing({
+      title,
+      slug,
+      description,
+      price,
+      currency,
+      type: type as ListingType,
+      status: "ACTIVE",
+      quantity,
+      agentId: agent.id,
+      categoryId: categoryId || undefined,
+      locationId: locationId || undefined,
+      storefrontId: storefrontId || undefined,
     });
 
-    return successResponse(listing, "Listing created successfully");
+    if (!listing) {
+      return errorResponse("Failed to create listing", 500);
+    }
+
+    // Create media assets if images provided
+    if (images.length > 0) {
+      await createMediaAssets(
+        images.map((url: string, index: number) => ({
+          listingId: listing.id,
+          url,
+          sortOrder: index,
+        }))
+      );
+    }
+
+    // Fetch the full listing with relations
+    const fullListing = await getListingByIdOrSlug(listing.id);
+
+    return successResponse(fullListing, "Listing created successfully");
   } catch (error) {
     console.error("Create listing error:", error);
     return errorResponse("Failed to create listing", 500);

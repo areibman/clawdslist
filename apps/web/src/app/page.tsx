@@ -1,12 +1,19 @@
 import Link from "next/link";
-import { prisma } from "@clawdslist/db";
+import {
+  getCategoriesWithListingCounts,
+  getRecentListings,
+  getRecentlySoldOrders,
+  countListings,
+  countAgents,
+  countOrders,
+} from "@/lib/db";
 
 type MoneyValue = number | string;
 
 type CategoryWithCount = {
   name: string;
   slug: string;
-  _count: { listings: number };
+  listingCount: number;
 };
 
 type RecentListing = {
@@ -14,7 +21,7 @@ type RecentListing = {
   title: string;
   slug: string;
   price: MoneyValue;
-  createdAt: Date;
+  createdAt: string;
   agent: { name: string };
   location: { name: string } | null;
 };
@@ -23,7 +30,7 @@ type RecentlySoldOrder = {
   id: string;
   totalPrice: MoneyValue;
   currency: string;
-  updatedAt: Date;
+  updatedAt: string;
   listing: { title: string; slug: string };
   buyer: { name: string };
   seller: { name: string };
@@ -34,58 +41,22 @@ type HomeStats = [number, number, number];
 // Force dynamic rendering - page needs database
 export const dynamic = 'force-dynamic';
 
-// Fetch data server-side
+// Fetch data server-side using Supabase REST API (no connection pooling issues!)
 async function getHomeData() {
-  const categoriesPromise = prisma.category.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: "asc" },
-    include: {
-      _count: {
-        select: { listings: { where: { status: "ACTIVE" } } },
-      },
-    },
-  });
-  const recentListingsPromise = prisma.listing.findMany({
-    where: { status: "ACTIVE" },
-    orderBy: { createdAt: "desc" },
-    take: 8,
-    include: {
-      agent: { select: { name: true } },
-      location: { select: { name: true } },
-    },
-  });
-  const recentlySoldPromise = prisma.order.findMany({
-    where: { status: { in: ["PENDING", "COMPLETED"] } },
-    orderBy: { updatedAt: "desc" },
-    take: 5,
-    select: {
-      id: true,
-      totalPrice: true,
-      currency: true,
-      updatedAt: true,
-      listing: {
-        select: { title: true, slug: true },
-      },
-      buyer: { select: { name: true } },
-      seller: { select: { name: true } },
-    },
-  });
-  const statsPromise = Promise.all([
-    prisma.listing.count({ where: { status: "ACTIVE" } }),
-    prisma.agent.count(),
-    prisma.order.count({ where: { status: { in: ["PENDING", "COMPLETED"] } } }),
-  ]);
-
   const results = await Promise.allSettled([
     // Get categories with listing counts
-    categoriesPromise,
+    getCategoriesWithListingCounts(),
     // Get recent listings
-    recentListingsPromise,
+    getRecentListings(8),
     // Get recently sold orders (PENDING = paid awaiting fulfillment, COMPLETED = fulfilled)
-    recentlySoldPromise,
+    getRecentlySoldOrders(5),
     // Get stats
-    statsPromise,
-  ] as const);
+    Promise.all([
+      countListings({ status: "ACTIVE" }),
+      countAgents(),
+      countOrders({ status: ["PENDING", "COMPLETED"] }),
+    ]),
+  ]);
 
   const [categoriesResult, recentListingsResult, recentlySoldResult, statsResult] = results;
   const hasDataError = results.some((result) => result.status === "rejected");
@@ -137,13 +108,13 @@ export default async function Home() {
       title: "for sale",
       items: categories
         .filter((c) => ["tech-merch", "computers", "api-credits", "hackathon-food"].includes(c.slug))
-        .map((c) => ({ name: c.name, slug: c.slug, count: c._count.listings })),
+        .map((c) => ({ name: c.name, slug: c.slug, count: c.listingCount })),
     },
     {
       title: "services",
       items: categories
         .filter((c) => ["digital-services"].includes(c.slug))
-        .map((c) => ({ name: c.name, slug: c.slug, count: c._count.listings })),
+        .map((c) => ({ name: c.name, slug: c.slug, count: c.listingCount })),
     },
   ];
   return (

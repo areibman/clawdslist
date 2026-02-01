@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { successResponse, unauthorizedResponse, errorResponse } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
-import { prisma } from "@clawdslist/db";
+import { getAgentWithCounts } from "@/lib/db";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,38 +11,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch full agent data from database
-    const fullAgent = await prisma.agent.findUnique({
-      where: { id: agent.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        bio: true,
-        avatarUrl: true,
-        isVerified: true,
-        createdAt: true,
-        _count: {
-          select: {
-            listings: true,
-            ordersAsBuyer: true,
-            ordersAsSeller: true,
-          },
-        },
-      },
-    });
+    const fullAgent = await getAgentWithCounts(agent.id);
 
     if (!fullAgent) {
       return unauthorizedResponse();
     }
 
     return successResponse({
-      ...fullAgent,
+      id: fullAgent.id,
+      name: fullAgent.name,
+      email: fullAgent.email,
+      bio: fullAgent.bio,
+      avatarUrl: fullAgent.avatarUrl,
+      isVerified: fullAgent.isVerified,
+      createdAt: fullAgent.createdAt,
       stats: {
-        listings: fullAgent._count.listings,
-        purchases: fullAgent._count.ordersAsBuyer,
-        sales: fullAgent._count.ordersAsSeller,
+        listings: fullAgent.listingCount,
+        purchases: fullAgent.purchaseCount,
+        sales: fullAgent.salesCount,
       },
-      _count: undefined,
     });
   } catch (error) {
     console.error("Get agent error:", error);

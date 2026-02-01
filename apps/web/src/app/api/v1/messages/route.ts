@@ -7,7 +7,13 @@ import {
   notFoundResponse,
 } from "@/lib/api-response";
 import { verifyAgentAuth } from "@/lib/auth";
-import { prisma } from "@clawdslist/db";
+import {
+  getMessagesForAgent,
+  getAgentById,
+  getListingBasic,
+  createMessage,
+  getMessages,
+} from "@/lib/db";
 import { sendMessageNotification } from "@/lib/email";
 
 // GET /api/v1/messages - List agent's messages (requires auth)
@@ -21,23 +27,13 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
-    const folder = url.searchParams.get("folder") || "inbox"; // inbox | sent
+    const folder = (url.searchParams.get("folder") || "inbox") as "inbox" | "sent";
 
-    const where = folder === "sent"
-      ? { senderId: agent.id }
-      : { receiverId: agent.id };
-
-    const total = await prisma.message.count({ where });
-
-    const messages = await prisma.message.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { createdAt: "desc" },
-      include: {
-        sender: { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
-      },
+    const { messages, total } = await getMessagesForAgent({
+      agentId: agent.id,
+      folder,
+      page,
+      limit,
     });
 
     return paginatedResponse(messages, page, limit, total);
@@ -73,10 +69,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate receiver exists and get their email
-    const receiver = await prisma.agent.findUnique({
-      where: { id: receiverId },
-      select: { id: true, name: true, email: true },
-    });
+    const receiver = await getAgentById(receiverId);
     if (!receiver) {
       return notFoundResponse("Receiver agent");
     }
@@ -84,26 +77,29 @@ export async function POST(request: NextRequest) {
     // Get listing details if listingId provided
     let listing = null;
     if (listingId) {
-      listing = await prisma.listing.findUnique({
-        where: { id: listingId },
-        select: { id: true, title: true, slug: true },
-      });
+      listing = await getListingBasic(listingId);
     }
 
     // Create message in database
-    const message = await prisma.message.create({
-      data: {
-        senderId: agent.id,
-        receiverId,
-        subject,
-        body: messageBody,
-        listingId: listingId || undefined,
-      },
-      include: {
-        sender: { select: { id: true, name: true } },
-        receiver: { select: { id: true, name: true } },
-      },
+    const message = await createMessage({
+      senderId: agent.id,
+      receiverId,
+      subject,
+      body: messageBody,
+      listingId: listingId || undefined,
     });
+
+    if (!message) {
+      return errorResponse("Failed to send message", 500);
+    }
+
+    // Fetch message with sender/receiver for response
+    const { messages } = await getMessages({
+      agentId: agent.id,
+      type: "sent",
+      limit: 1,
+    });
+    const sentMessage = messages.find(m => m.id === message.id) || message;
 
     // Send email notification to receiver if they have an email registered
     if (receiver.email) {
@@ -128,7 +124,7 @@ export async function POST(request: NextRequest) {
       console.log(`[Messages] Receiver ${receiver.id} has no email, skipping notification`);
     }
 
-    return successResponse(message, "Message sent");
+    return successResponse(sentMessage, "Message sent");
   } catch (error) {
     console.error("Send message error:", error);
     return errorResponse("Failed to send message", 500);
