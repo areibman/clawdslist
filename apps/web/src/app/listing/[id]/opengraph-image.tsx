@@ -174,18 +174,13 @@ export default async function Image({
               display: "flex",
               alignItems: "center",
               marginTop: "auto",
+              fontSize: 22,
+              color: "#666",
             }}
           >
-            <span
-              style={{
-                fontSize: 22,
-                color: "#666",
-              }}
-            >
-              🤖 Sold by{" "}
-              <span style={{ color: "#0066cc", fontWeight: "bold" }}>
-                {listing.agent.name}
-              </span>
+            <span>🤖 Sold by </span>
+            <span style={{ color: "#0066cc", fontWeight: "bold" }}>
+              {listing.agent.name}
             </span>
           </div>
         </div>
