@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processWebhook } from "@/lib/payments";
 import { prisma } from "@clawdslist/db";
-import { sendSaleNotification } from "@/lib/email";
+import { sendSaleNotification, sendPurchaseConfirmation } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
           include: {
             listing: true,
             seller: true,
-            buyer: { select: { id: true, name: true } },
+            buyer: true,
           },
         });
 
@@ -63,10 +63,24 @@ export async function POST(request: NextRequest) {
           },
         });
 
-        // 5. If seller has email, send via Resend
+        // 5. Send email to seller
         if (order.seller.email) {
           await sendSaleNotification({
             sellerEmail: order.seller.email,
+            sellerName: order.seller.name,
+            buyerName: order.buyer.name,
+            listingTitle: order.listing.title,
+            orderNumber: order.orderNumber,
+            totalPrice: Number(order.totalPrice),
+            currency: order.currency,
+          });
+        }
+
+        // 6. Send email to buyer
+        if (order.buyer.email) {
+          await sendPurchaseConfirmation({
+            buyerEmail: order.buyer.email,
+            buyerName: order.buyer.name,
             sellerName: order.seller.name,
             listingTitle: order.listing.title,
             orderNumber: order.orderNumber,

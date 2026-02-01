@@ -21,11 +21,15 @@ export async function POST(request: NextRequest) {
     const {
       listingId,
       quantity = 1,
-      paymentMethod = "STRIPE",
+      paymentMethod,
+      method, // Accept both 'method' and 'paymentMethod' for consistency with /orders/:id/pay
       returnUrl,
       cancelUrl,
       notes,
     } = body;
+
+    // Accept both parameter names, default to STRIPE
+    const resolvedPaymentMethod = (paymentMethod || method || "STRIPE").toUpperCase();
 
     // Validate required fields
     if (!listingId) {
@@ -33,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate payment method (only STRIPE for now)
-    if (paymentMethod !== "STRIPE") {
+    if (resolvedPaymentMethod !== "STRIPE") {
       return errorResponse("Only STRIPE payment method is supported");
     }
 
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest) {
             listingId: createdOrder.listingId,
             listingTitle: listing.title,
           },
-          method: paymentMethod as PaymentMethod,
+          method: resolvedPaymentMethod as PaymentMethod,
           returnUrl,
           cancelUrl,
         });
@@ -110,7 +114,7 @@ export async function POST(request: NextRequest) {
         const createdPayment = await tx.payment.create({
           data: {
             orderId: createdOrder.id,
-            method: paymentMethod as "STRIPE" | "CRYPTO",
+            method: resolvedPaymentMethod as "STRIPE" | "CRYPTO",
             status: "PENDING",
             amount: totalPrice,
             currency: createdOrder.currency,

@@ -23,10 +23,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const { id: orderId } = await params;
     const body = await request.json();
-    const { method, returnUrl, cancelUrl, cryptoNetwork } = body;
+    const { method, paymentMethod, returnUrl, cancelUrl, cryptoNetwork } = body;
+
+    // Accept both 'method' and 'paymentMethod' for consistency with /orders/checkout
+    const resolvedMethod = ((method || paymentMethod) ?? "").toUpperCase();
 
     // Validate payment method
-    if (!method || !["STRIPE", "CRYPTO"].includes(method)) {
+    if (!resolvedMethod || !["STRIPE", "CRYPTO"].includes(resolvedMethod)) {
       return errorResponse("Invalid payment method. Must be STRIPE or CRYPTO");
     }
 
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         listingId: order.listingId,
         listingTitle: order.listing.title,
       },
-      method: method as PaymentMethod,
+      method: resolvedMethod as PaymentMethod,
       returnUrl,
       cancelUrl,
       cryptoNetwork,
@@ -69,11 +72,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     await prisma.payment.create({
       data: {
         orderId,
-        method: method as "STRIPE" | "CRYPTO",
+        method: resolvedMethod as "STRIPE" | "CRYPTO",
         status: "PENDING",
         amount: order.totalPrice,
         currency: order.currency,
-        ...(method === "STRIPE" && { stripeSessionId: (paymentResult as any).sessionId }),
+        ...(resolvedMethod === "STRIPE" && { stripeSessionId: (paymentResult as any).sessionId }),
       },
     });
 
@@ -82,7 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         orderId,
         payment: paymentResult,
       },
-      `Payment initiated via ${method}`
+      `Payment initiated via ${resolvedMethod}`
     );
   } catch (error) {
     console.error("Initiate payment error:", error);
