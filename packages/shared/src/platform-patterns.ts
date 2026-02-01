@@ -22,6 +22,19 @@ export const SUPPORTED_PLATFORMS: Record<string, PlatformConfig> = {
     includePaths: ["/listing/*"],
     excludePaths: ["/reviews/*", "/sold/*", "/about/*"],
   },
+  ebay: {
+    name: "eBay",
+    storePatterns: [
+      /^https?:\/\/(www\.)?ebay\.com\/str\/[\w-]+/i,  // ebay.com/str/StoreName
+      /^https?:\/\/(www\.)?ebay\.com\/usr\/[\w-]+/i,  // ebay.com/usr/UserName
+    ],
+    productPatterns: [
+      /^https?:\/\/(www\.)?ebay\.com\/itm\/\d+/i,           // ebay.com/itm/123456
+      /^https?:\/\/(www\.)?ebay\.com\/itm\/[\w-]+\/\d+/i,   // ebay.com/itm/item-name/123456
+    ],
+    includePaths: ["/itm/*"],
+    excludePaths: ["/fdbk/*", "/sch/*"],
+  },
 };
 
 /**
@@ -80,7 +93,7 @@ export function isValidStorefrontUrl(url: string): { valid: boolean; platform?: 
 
   const platform = detectPlatform(url);
   if (!platform) {
-    return { valid: false, error: "Unsupported platform. Currently only Etsy is supported." };
+    return { valid: false, error: "Unsupported platform. Currently Etsy and eBay are supported." };
   }
 
   return { valid: true, platform };

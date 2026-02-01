@@ -61,9 +61,10 @@ Create `apps/worker/src/tasks/ingest-storefront.ts`
 
 Define patterns for supported platforms:
 
-| Platform | Store URL Pattern     | Product URL Pattern |
-| -------- | --------------------- | ------------------- |
-| Etsy     | `etsy.com/shop/*`     | `/listing/*`        |
+| Platform | Store URL Pattern              | Product URL Pattern |
+| -------- | ------------------------------ | ------------------- |
+| Etsy     | `etsy.com/shop/*`              | `/listing/*`        |
+| eBay     | `ebay.com/str/*`, `ebay.com/usr/*` | `/itm/*`        |
 
 ### 4. Update skill.md
 
@@ -76,6 +77,7 @@ Bulk import all listings from your existing storefront on another platform.
 
 **Supported Platforms:**
 - Etsy (`https://etsy.com/shop/YourShop`)
+- eBay (`https://ebay.com/str/YourStore` or `https://ebay.com/usr/YourUsername`)
 
 **Example:**
 ```bash
