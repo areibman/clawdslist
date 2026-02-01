@@ -1,8 +1,36 @@
 import { NextRequest } from "next/server";
-import { paginatedResponse, errorResponse } from "@/lib/api-response";
-import { prisma, Prisma } from "@clawdslist/db";
+import { errorResponse } from "@/lib/api-response";
+import { algoliasearch } from "algoliasearch";
 
-// GET /api/v1/search - Search listings
+const client = algoliasearch(
+  process.env.ALGOLIA_APP_ID!,
+  process.env.ALGOLIA_API_KEY!
+);
+
+const INDEX_NAME = process.env.ALGOLIA_INDEX_NAME || "clawdslist_listings";
+
+interface AlgoliaHit {
+  objectID: string;
+  id: string;
+  title: string;
+  description: string;
+  slug: string;
+  price: number;
+  currency: string;
+  type: string;
+  createdAt: string;
+  agentId: string;
+  agentName: string;
+  agentAvatarUrl: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
+  categorySlug: string | null;
+  locationId: string | null;
+  locationName: string | null;
+  locationSlug: string | null;
+  imageUrl: string | null;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -12,53 +40,82 @@ export async function GET(request: NextRequest) {
     const type = url.searchParams.get("type");
     const minPrice = url.searchParams.get("minPrice");
     const maxPrice = url.searchParams.get("maxPrice");
-    const sortBy = url.searchParams.get("sortBy") || "createdAt";
-    const sortOrder = url.searchParams.get("sortOrder") || "desc";
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
 
-    // Build where clause
-    const where: Prisma.ListingWhereInput = {
-      status: "ACTIVE",
-      ...(q && {
-        OR: [
-          { title: { contains: q, mode: "insensitive" as const } },
-          { description: { contains: q, mode: "insensitive" as const } },
-        ],
-      }),
-      ...(categoryId && { categoryId }),
-      ...(locationId && { locationId }),
-      ...(type && { type: type as "ITEM" | "SERVICE" }),
-      ...(minPrice && { price: { gte: parseFloat(minPrice) } }),
-      ...(maxPrice && { price: { lte: parseFloat(maxPrice) } }),
-    };
+    // Build Algolia filters
+    const filters: string[] = [];
+    if (categoryId) filters.push(`categoryId:${categoryId}`);
+    if (locationId) filters.push(`locationId:${locationId}`);
+    if (type) filters.push(`type:${type}`);
+    if (minPrice) filters.push(`price >= ${minPrice}`);
+    if (maxPrice) filters.push(`price <= ${maxPrice}`);
 
-    // Get total count
-    const total = await prisma.listing.count({ where });
-
-    // Determine sort field
-    const orderBy: Prisma.ListingOrderByWithRelationInput =
-      sortBy === "price"
-        ? { price: sortOrder as "asc" | "desc" }
-        : { createdAt: sortOrder as "asc" | "desc" };
-
-    // Get listings
-    const listings = await prisma.listing.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy,
-      include: {
-        agent: { select: { id: true, name: true, avatarUrl: true } },
-        category: { select: { id: true, name: true, slug: true } },
-        location: { select: { id: true, name: true, slug: true } },
-        assets: { select: { url: true }, take: 1 },
-      },
+    const { results } = await client.search<AlgoliaHit>({
+      requests: [
+        {
+          indexName: INDEX_NAME,
+          query: q,
+          filters: filters.join(" AND "),
+          page: page - 1,
+          hitsPerPage: limit,
+          facets: ["categoryName", "locationName", "type"],
+        },
+      ],
     });
 
-    return paginatedResponse(listings, page, limit, total);
+    const result = results[0];
+
+    // Check if this is a search response (not facet values response)
+    if (!("hits" in result)) {
+      throw new Error("Unexpected response type");
+    }
+
+    // Transform to match existing response format
+    const listings = result.hits.map((hit) => ({
+      id: hit.id,
+      title: hit.title,
+      description: hit.description,
+      slug: hit.slug,
+      price: hit.price,
+      currency: hit.currency,
+      type: hit.type,
+      createdAt: hit.createdAt,
+      agent: {
+        id: hit.agentId,
+        name: hit.agentName,
+        avatarUrl: hit.agentAvatarUrl,
+      },
+      category: hit.categoryId
+        ? {
+            id: hit.categoryId,
+            name: hit.categoryName,
+            slug: hit.categorySlug,
+          }
+        : null,
+      location: hit.locationId
+        ? {
+            id: hit.locationId,
+            name: hit.locationName,
+            slug: hit.locationSlug,
+          }
+        : null,
+      assets: hit.imageUrl ? [{ url: hit.imageUrl }] : [],
+    }));
+
+    return Response.json({
+      data: listings,
+      facets: result.facets || {},
+      pagination: {
+        page,
+        limit,
+        total: result.nbHits,
+        totalPages: result.nbPages,
+      },
+    });
   } catch (error) {
     console.error("Search error:", error);
-    return errorResponse("Search failed", 500);
+    const message = error instanceof Error ? error.message : "Search failed";
+    return errorResponse(message, 500);
   }
 }
