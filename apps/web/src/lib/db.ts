@@ -20,6 +20,11 @@ function generateId(): string {
   return `c${timestamp}${random}`;
 }
 
+// Get current timestamp for createdAt/updatedAt fields
+function now(): string {
+  return new Date().toISOString();
+}
+
 // ============================================================================
 // TYPES (matching Prisma schema)
 // ============================================================================
@@ -195,11 +200,13 @@ export async function createAgent(data: {
   avatarUrl?: string;
   bio?: string;
 }): Promise<Agent | null> {
+  const timestamp = now();
   const insertData = {
     id: generateId(),
     ...data,
+    createdAt: timestamp,
+    updatedAt: timestamp,
   };
-  console.log("[DB] createAgent inserting:", JSON.stringify(insertData, null, 2));
   
   const { data: agent, error } = await getDb()
     .from("Agent")
@@ -467,6 +474,7 @@ export async function createListing(data: {
   locationId?: string;
   storefrontId?: string;
 }): Promise<Listing | null> {
+  const timestamp = now();
   const { data: listing, error } = await getDb()
     .from("Listing")
     .insert({
@@ -476,6 +484,8 @@ export async function createListing(data: {
       type: data.type || "ITEM",
       status: data.status || "ACTIVE",
       quantity: data.quantity || 1,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     })
     .select()
     .single();
@@ -491,7 +501,7 @@ export async function createListing(data: {
 export async function updateListing(id: string, data: Partial<Listing>): Promise<Listing | null> {
   const { data: listing, error } = await getDb()
     .from("Listing")
-    .update(data)
+    .update({ ...data, updatedAt: now() })
     .eq("id", id)
     .select()
     .single();
@@ -535,8 +545,14 @@ export async function createMediaAssets(assets: {
 }[]): Promise<MediaAsset[]> {
   if (assets.length === 0) return [];
 
-  // Add IDs to each asset
-  const assetsWithIds = assets.map(asset => ({ id: generateId(), ...asset }));
+  const timestamp = now();
+  // Add IDs and timestamps to each asset
+  const assetsWithIds = assets.map(asset => ({
+    id: generateId(),
+    ...asset,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  }));
 
   const { data, error } = await getDb()
     .from("MediaAsset")
@@ -679,6 +695,7 @@ export async function createOrder(data: {
   currency?: string;
   notes?: string;
 }): Promise<Order | null> {
+  const timestamp = now();
   const insertData = {
     id: generateId(),
     ...data,
@@ -686,8 +703,9 @@ export async function createOrder(data: {
     quantity: data.quantity || 1,
     currency: data.currency || "USD",
     status: "AWAITING_PAYMENT",
+    createdAt: timestamp,
+    updatedAt: timestamp,
   };
-  console.log("[DB] createOrder inserting:", JSON.stringify(insertData, null, 2));
   
   const { data: order, error } = await getDb()
     .from("Order")
@@ -706,7 +724,7 @@ export async function createOrder(data: {
 export async function updateOrder(id: string, data: Partial<Order>): Promise<Order | null> {
   const { data: order, error } = await getDb()
     .from("Order")
-    .update(data)
+    .update({ ...data, updatedAt: now() })
     .eq("id", id)
     .select()
     .single();
@@ -751,6 +769,7 @@ export async function createPayment(data: {
   cryptoNetwork?: string;
   metadata?: Record<string, unknown>;
 }): Promise<Payment | null> {
+  const timestamp = now();
   const { data: payment, error } = await getDb()
     .from("Payment")
     .insert({
@@ -758,6 +777,8 @@ export async function createPayment(data: {
       ...data,
       currency: data.currency || "USD",
       status: "PENDING",
+      createdAt: timestamp,
+      updatedAt: timestamp,
     })
     .select()
     .single();
@@ -773,7 +794,7 @@ export async function createPayment(data: {
 export async function updatePayment(id: string, data: Partial<Payment>): Promise<Payment | null> {
   const { data: payment, error } = await getDb()
     .from("Payment")
-    .update(data)
+    .update({ ...data, updatedAt: now() })
     .eq("id", id)
     .select()
     .single();
@@ -848,11 +869,14 @@ export async function createMessage(data: {
   body: string;
   listingId?: string;
 }): Promise<Message | null> {
+  const timestamp = now();
   const { data: message, error } = await getDb()
     .from("Message")
     .insert({
       id: generateId(),
       ...data,
+      createdAt: timestamp,
+      updatedAt: timestamp,
     })
     .select()
     .single();
@@ -875,12 +899,15 @@ export async function createListingSource(data: {
   rawPayload: Record<string, unknown>;
   provider?: string;
 }): Promise<boolean> {
+  const timestamp = now();
   const { error } = await getDb()
     .from("ListingSource")
     .insert({
       id: generateId(),
       ...data,
       provider: data.provider || "firecrawl",
+      createdAt: timestamp,
+      updatedAt: timestamp,
     });
 
   if (error) {
